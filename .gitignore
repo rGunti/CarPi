@@ -167,4 +167,4 @@ typings/
 
 .gitignore
 .idea/
-CarPi.iml
+*.iml
