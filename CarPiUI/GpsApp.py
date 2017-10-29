@@ -28,7 +28,7 @@ from PygameUtils import load_image, init_pygame
 from CarPiLogging import log, boot_print, end_print, print_unhandled_exception, EXIT_CODES
 from CarPiConfig import init_config_env
 from RedisUtils import get_redis, RedisBackgroundFetcher
-from RedisKeys import GpsRedisKeys
+from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys
 from math import isnan
 from redis import exceptions as redis_exceptions
 import os
@@ -86,7 +86,13 @@ RNAME_FETCH_KEYS = [
     GpsRedisKeys.KEY_LONGITUDE,
     GpsRedisKeys.KEY_SPEED_KMH,
     GpsRedisKeys.KEY_EPX,
-    GpsRedisKeys.KEY_EPY
+    GpsRedisKeys.KEY_EPY,
+
+    NetworkInfoRedisKeys.KEY_ETH0_IP,
+    NetworkInfoRedisKeys.KEY_WLAN0_IP,
+    NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
+    NetworkInfoRedisKeys.KEY_WLAN1_IP,
+    NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH
 ]
 
 
@@ -221,6 +227,28 @@ class GpsApp(pqApp):
         else:
             self._set_accuracy(-1, -1, 1)
 
+        if self._check_key(current_data, NetworkInfoRedisKeys.KEY_ETH0_IP):
+            self._ethernetStatusIcon.image = IMAGES[IMAGE_ETHERNET]
+        else:
+            self._ethernetStatusIcon.image = IMAGES[IMAGE_ETHERNET_OFF]
+
+        wlan0_state = current_data.get(NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH, '0')
+        wlan1_state = current_data.get(NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH, '0')
+
+        if wlan0_state:
+            self._set_wifi(self._wifi0StatusIcon,
+                           self._check_key(current_data, NetworkInfoRedisKeys.KEY_WLAN0_IP),
+                           int(wlan0_state))
+        else:
+            self._set_wifi(self._wifi0StatusIcon, False, 0)
+
+        if wlan1_state:
+            self._set_wifi(self._wifi1StatusIcon,
+                           self._check_key(current_data, NetworkInfoRedisKeys.KEY_WLAN1_IP),
+                           int(wlan1_state))
+        else:
+            self._set_wifi(self._wifi1StatusIcon, False, 0)
+
     @staticmethod
     def _check_key(data, key):
         return key in data and data[key] is not None
@@ -289,6 +317,32 @@ class GpsApp(pqApp):
             log('Failed to parse EPX, EPY or MODE: {} / {} / {}'.format(val_x, val_y, mode))
             self._gpsStatusIcon.image = IMAGES[IMAGE_GPSSAT_OFF]
             self._accuracyLabel.settext('ERR')
+
+    def _set_ethernet(self, connected):
+        self._ethernetStatusIcon.image = IMAGES[IMAGE_ETHERNET if connected else IMAGE_ETHERNET_OFF]
+
+    def _set_wifi(self, wifi, connected, strength):
+        """
+        :param Image wifi:
+        :param boolean connected:
+        :param int strength:
+        :return:
+        """
+        if connected:
+            image = IMAGE_WIFI_OFF
+            if strength > 75:
+                image = IMAGE_WIFI3
+            elif strength > 50:
+                image = IMAGE_WIFI2
+            elif strength > 25:
+                image = IMAGE_WIFI1
+            elif strength < 0:
+                image = IMAGE_WIFI3
+            else:
+                image = IMAGE_WIFI0
+            wifi.image = IMAGES[image]
+        else:
+            wifi.image = IMAGES[IMAGE_WIFI_OFF]
 
     def _testButton_Click(self, e):
         self._modal.show()
