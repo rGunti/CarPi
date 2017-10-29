@@ -67,7 +67,7 @@ class GpsRedisKeys:
 
 
 class NetworkInfoRedisKeys:
-    KEY_ETH0_IP = 'Net.eth0'
+    KEY_ETH0_IP = 'Net.eth0.IP'
     KEY_WLAN0_IP = 'Net.wlan0.IP'
     KEY_WLAN0_STRENGTH = 'Net.wlan0.Strength'
     KEY_WLAN0_SSID = 'Net.wlan0.SSID'
