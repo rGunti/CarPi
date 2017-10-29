@@ -25,8 +25,8 @@ SOFTWARE.
 
 from redis import Redis, exceptions
 from CarPiLogging import log
+from CarPiThreading import CarPiThread
 from ConfigParser import ConfigParser
-from threading import Thread
 from time import sleep
 
 
@@ -94,7 +94,7 @@ def set_piped(r, data_dict):
     return result_dict
 
 
-class RedisBackgroundFetcher(Thread):
+class RedisBackgroundFetcher(CarPiThread):
     """
     Redis Background Data Fetcher
     """
@@ -108,7 +108,7 @@ class RedisBackgroundFetcher(Thread):
         :param list of str keys_to_fetch:
         :param int fetch_interval:
         """
-        super(RedisBackgroundFetcher, self).__init__()
+        CarPiThread.__init__(self, fetch_interval)
         self.keys_to_fetch = keys_to_fetch
         self._r = r
         self._running = True
@@ -126,29 +126,22 @@ class RedisBackgroundFetcher(Thread):
     def get_current_data(self):
         return self._current_data
 
-    def run(self):
-        while self._running:
-            try:
-                self._fetch_data()
-                self._retries = RedisBackgroundFetcher.RETRIES
-            except (exceptions.ConnectionError, exceptions.TimeoutError):
-                if self._retries == 0:
-                    log("Failed to reconnect to Redis after {} retries!".format(RedisBackgroundFetcher.RETRIES))
-                    raise
-                else:
-                    log("Connection to Redis lost, skipping and trying again in {} seconds ({} more times) ..."
-                        .format(RedisBackgroundFetcher.RETRY_INTERVAL, self._retries))
-                    self._retries -= 1
-                    sleep(RedisBackgroundFetcher.RETRY_INTERVAL)
-            except SystemExit:
-                log("SystemExit has been requested, stopping Fetcher Thread ...")
-                self._running = False
-
-            sleep(self._interval)
-
-    def stop(self, timeout=None):
-        self._running = False
-        self.join(timeout=timeout)
+    def _do(self):
+        try:
+            self._fetch_data()
+            self._retries = RedisBackgroundFetcher.RETRIES
+        except (exceptions.ConnectionError, exceptions.TimeoutError):
+            if self._retries == 0:
+                log("Failed to reconnect to Redis after {} retries!".format(RedisBackgroundFetcher.RETRIES))
+                raise
+            else:
+                log("Connection to Redis lost, skipping and trying again in {} seconds ({} more times) ..."
+                    .format(RedisBackgroundFetcher.RETRY_INTERVAL, self._retries))
+                self._retries -= 1
+                sleep(RedisBackgroundFetcher.RETRY_INTERVAL)
+        except SystemExit:
+            log("SystemExit has been requested, stopping Fetcher Thread ...")
+            self._running = False
 
 
 if __name__ == "__main__":
