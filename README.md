@@ -32,3 +32,6 @@ The project is licensed under my favorite license: **MIT**
 
 You can read more about it in the dedicated [License file](LICENSE) or here:
 https://tldrlegal.com/license/mit-license
+
+### Icons
+Icons in this project are provided by [icons8.com](http://icons8.com).
