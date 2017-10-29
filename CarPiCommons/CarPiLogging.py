@@ -26,7 +26,10 @@ SOFTWARE.
 from datetime import datetime
 from ConfigParser import ConfigParser
 from os import environ
+from traceback import print_exception
+
 import pytz
+import tzlocal
 import sys
 
 STARTED_APP = 'APP'
@@ -36,13 +39,29 @@ LOGGING_SECTION = 'Logging'
 LOGGING_OPTION_FILE = 'path'
 LOGGING_OPTION_MODE = 'mode'
 
+EXIT_CODES = {
+    'OK':                       0x0000,
+    'UnhandledException':       0x1000,
+    'DataSourceLost':           0x1001,
+    'DataDestinationLost':      0x1002,
+    'BackgroundThreadTimedOut': 0x1100
+}
+
 
 def log(msg):
     """
     Prints a message to stdout
     :param msg:
     """
-    print("{} | {}".format(get_utc_now(), msg))
+    print("{} | {}".format(get_local_now(), msg))
+
+
+def get_local_now():
+    """
+    Returns the current local time
+    :return str:
+    """
+    return datetime.now(tzlocal.get_localzone()).strftime(TIMESTAMP_FORMAT)
 
 
 def get_utc_now():
@@ -77,7 +96,7 @@ def setup_std_logging(log_file, log_mode='a+'):
     :param str log_file:
     :param str log_mode:
     """
-    if environ.get('CARPI_LOG_TO_STDOUT', '0') != '1' and log_file:
+    if environ.get('LOG_TO_STDOUT', '0') != '1' and log_file:
         sys.stderr = open(log_file, log_mode)
         sys.stdout = sys.stderr
 
@@ -94,6 +113,14 @@ def init_logging_from_config(config):
             if config.has_option(LOGGING_SECTION, LOGGING_OPTION_MODE):
                 log_mode = config.get(LOGGING_SECTION, LOGGING_OPTION_MODE)
             setup_std_logging(log_file, log_mode)
+
+
+def print_unhandled_exception(app_name=None):
+    exc_type, exc, traceback = sys.exc_info()
+    log("An unexpected error has forced {} to shut down!".format(app_name if app_name else STARTED_APP))
+    log("Exception detail:")
+    print_exception(exc_type, exc, traceback, limit=64)
+    del exc_type, exc, traceback
 
 
 if __name__ == "__main__":

@@ -27,6 +27,10 @@ from CarPiLogging import log, init_logging_from_config
 from os import environ
 
 
+class ConfigFileNotFoundError(Exception):
+    pass
+
+
 def init_config(filepath):
     """
     Creates a new ConfigParser instance and reads the given file
@@ -35,21 +39,40 @@ def init_config(filepath):
     """
     log('Reading Config File {} ...'.format(filepath))
     config = ConfigParser()
-    config.readfp(open(filepath))
+    try:
+        config.readfp(open(filepath))
+    except IOError:
+        raise ConfigFileNotFoundError
     init_logging_from_config(config)
     return config
 
 
-def init_config_env(env_name, default_name='config.cnf'):
+def init_config_env(env_name, default_names=['config.cnf']):
     """
     Creates a new ConfigParser instance and reads the file given
     by an Environmental Variable. If variable does not exist
     a default value will be used.
     :param str env_name: Name of Environmental Variable
-    :param str default_name: Default Name (default: 'config.cnf')
+    :param list of str default_names: Default Name (default: 'config.cnf')
     :return ConfigParser:
     """
-    return init_config(environ.get(env_name, default_name))
+    if env_name in environ:
+        return init_config(environ[env_name])
+    else:
+        c = None
+        for default_name in default_names:
+            try:
+                c = init_config(default_name)
+                return c
+            except ConfigFileNotFoundError:
+                log('Could not find {} ...'.format(default_name))
+
+        if not c:
+            log('Failed to load Configuration File!')
+            raise ConfigFileNotFoundError('Failed to load Configuration File!')
+        else:
+            # This will probably never happen...
+            return c
 
 
 if __name__ == "__main__":
