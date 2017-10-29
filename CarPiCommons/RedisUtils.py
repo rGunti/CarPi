@@ -97,7 +97,11 @@ def set_piped(r, data_dict):
     result_dict = {}
     pipe = r.pipeline()
     for key, value in data_dict.iteritems():
-        pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
+        if value is None:
+            pipe.delete(key)
+        else:
+            pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
+
         result_dict[key] = None
         keys.append(key)
 
