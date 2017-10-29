@@ -26,7 +26,7 @@ SOFTWARE.
 from redis import Redis, exceptions
 from CarPiLogging import log
 from CarPiThreading import CarPiThread
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError
 from time import sleep
 
 
@@ -35,6 +35,9 @@ RCONFIG_SECTION = 'Redis'
 RCONFIG_KEY_HOST = 'host'
 RCONFIG_KEY_PORT = 'port'
 RCONFIG_KEY_DB = 'db'
+RCONFIG_KEY_EXPIRE = 'expire'
+
+RCONFIG_VALUE_EXPIRE = None
 
 
 def get_redis(config):
@@ -42,6 +45,17 @@ def get_redis(config):
     :param ConfigParser config:
     :return Redis:
     """
+    global RCONFIG_VALUE_EXPIRE
+    try:
+        RCONFIG_VALUE_EXPIRE = config.getint(RCONFIG_SECTION, RCONFIG_KEY_EXPIRE)
+        log("The Redis values will expire after {} seconds.".format(RCONFIG_VALUE_EXPIRE))
+    except NoOptionError:
+        log("The Redis values will not expire.")
+        RCONFIG_VALUE_EXPIRE = None
+    except ValueError:
+        log("The provided default Expire value is invalid! No expiration will be set.")
+        RCONFIG_VALUE_EXPIRE = None
+
     return Redis(host=config.get(RCONFIG_SECTION, RCONFIG_KEY_HOST),
                  port=config.getint(RCONFIG_SECTION, RCONFIG_KEY_PORT),
                  db=config.get(RCONFIG_SECTION, RCONFIG_KEY_DB),
@@ -83,7 +97,7 @@ def set_piped(r, data_dict):
     result_dict = {}
     pipe = r.pipeline()
     for key, value in data_dict.iteritems():
-        pipe.set(key, value)
+        pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
         result_dict[key] = None
         keys.append(key)
 
