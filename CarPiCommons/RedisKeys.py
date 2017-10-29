@@ -66,5 +66,32 @@ class GpsRedisKeys:
     ]
 
 
+class NetworkInfoRedisKeys:
+    KEY_ETH0_IP = 'Net.eth0'
+    KEY_WLAN0_IP = 'Net.wlan0.IP'
+    KEY_WLAN0_STRENGTH = 'Net.wlan0.Strength'
+    KEY_WLAN0_SSID = 'Net.wlan0.SSID'
+    KEY_WLAN1_IP = 'Net.wlan1.IP'
+    KEY_WLAN1_STRENGTH = 'Net.wlan1.Strength'
+    KEY_WLAN1_SSID = 'Net.wlan1.SSID'
+
+    KEYS = [
+        KEY_ETH0_IP,
+        KEY_WLAN0_IP,
+        KEY_WLAN0_STRENGTH,
+        KEY_WLAN0_SSID,
+        KEY_WLAN1_IP,
+        KEY_WLAN1_STRENGTH,
+        KEY_WLAN1_SSID
+    ]
+
+
+def prepare_dict(keys, default_value=None):
+    dict = {}
+    for key in keys:
+        dict[key] = default_value
+    return dict
+
+
 if __name__ == "__main__":
     print("This script is not intended to be run standalone!")
