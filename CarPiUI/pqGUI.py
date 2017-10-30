@@ -22,10 +22,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import datetime
 import pygame
 from pygame.locals import *
 from threading import Timer
-from math import pi as PI
+from math import pi as PI, ceil
 
 VERSION = (0, 0, 2)
 LONG_VERSION = 'v%s.%s.%s' % VERSION
@@ -989,6 +990,68 @@ class Image(Widget):
                 and self.state:
             screen.blit(self.image, (self.x + position[0] + 10 - self.image.get_width() / 2,
                                      self.y + position[1] + self.height / 2 - self.image.get_height() / 2))
+
+
+class Graph(Widget):
+    def __init__(self, parent, rect, data=[], data_gap_ms=500, style=None, state=ENABLED):
+        Widget.__init__(self, parent, rect, style, state)
+        self._data = data
+        self._last_added = None
+        self._data_gap_ms = data_gap_ms
+
+    def add_data_point(self, val):
+        if self._last_added \
+                and (datetime.datetime.now() - self._last_added).microseconds < self._data_gap_ms * 1000:
+            return
+
+        self._data.append(val)
+        self._data = self._data[-self.get_max_data_points():]
+        self._last_added = datetime.datetime.now()
+
+    def get_max_data_points(self):
+        return self.width - 2
+
+    def prefill_data(self):
+        for i in range(0, self.get_max_data_points()):
+            self._data.append(0)
+
+    @staticmethod
+    def round_up_to_10(v):
+        return int(ceil(v / 10.0)) * 10
+
+    def draw(self, screen, position, bg=True):
+        Widget.draw(self, screen, position)
+
+        # Draw Data
+        min_item = float(0)
+        max_item = float(self.round_up_to_10(max(max(self._data), 10)))
+        height = float(self.height - 2)
+        max_p = self.get_max_data_points()
+
+        # Values
+        for i, data_point in enumerate(self._data):
+            rel_val = (height / max_item) * data_point
+            pygame.draw.line(screen,
+                             self.style[TEXT_COLOR],
+                             (self.x + i + 1, ceil(self.y + height + 1)),
+                             (self.x + i + 1, ceil(self.y + height + 1 - rel_val)))
+
+        # Scale
+        for i in range(0, int(max_item), 10):
+            if i % 20 == 10 and max_item > 50:
+                continue
+
+            rel_val = (height / max_item) * float(i)
+            pygame.draw.line(screen,
+                             self.style[BD_COLOR],
+                             (self.x, ceil(self.y + height + 1 - rel_val)),
+                             (self.x + self.width - 1, ceil(self.y + height + 1 - rel_val)))
+
+        # Border
+        pygame.draw.rect(screen,
+                         self.style[BD_COLOR],
+                         Rect(self.x + position[0], self.y + position[1], self.width, self.height),
+                         1)
 
 
 class Text(Widget):

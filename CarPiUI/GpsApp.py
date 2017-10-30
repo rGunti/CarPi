@@ -31,6 +31,7 @@ from RedisUtils import get_redis, RedisBackgroundFetcher
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys
 from math import isnan
 from redis import exceptions as redis_exceptions
+from datetime import datetime
 import os
 import sys
 import time
@@ -125,21 +126,29 @@ class GpsApp(pqApp):
                                     },
                                     wrap=WRAP_CHAR).pack()
 
-        self._latitudeLabel = Text(self,
-                                   ((5, 150), (215, 40)),
-                                   '---.---------- N',
-                                   style={
-                                       TEXT_FONT: (FONT_DOTMTX, 20)
-                                   },
-                                   wrap=WRAP_CHAR).pack()
+        # self._latitudeLabel = Text(self,
+        #                            ((5, 150), (215, 40)),
+        #                            '---.---------- N',
+        #                            style={
+        #                                TEXT_FONT: (FONT_DOTMTX, 20)
+        #                            },
+        #                            wrap=WRAP_CHAR).pack()
+        #
+        # self._longitudeLabel = Text(self,
+        #                             ((5, 170), (215, 40)),
+        #                             '---.---------- E',
+        #                             style={
+        #                                 TEXT_FONT: (FONT_DOTMTX, 20)
+        #                             },
+        #                             wrap=WRAP_CHAR).pack()
 
-        self._longitudeLabel = Text(self,
-                                    ((5, 170), (215, 40)),
-                                    '---.---------- E',
-                                    style={
-                                        TEXT_FONT: (FONT_DOTMTX, 20)
-                                    },
-                                    wrap=WRAP_CHAR).pack()
+        self._speedGraph = Graph(self,
+                                 ((5, 150), (215, 50)),
+                                 data_gap_ms=500,
+                                 style={
+                                     TEXT_COLOR: (150, 150, 150)
+                                 }).pack()
+        self._speedGraph.prefill_data()
 
         self._accuracyLabel = Text(self,
                                    ((10, 45), (32, 32)),
@@ -203,15 +212,15 @@ class GpsApp(pqApp):
         self._timeLabel.settext(time.strftime('%H:%M:%S'))
 
         current_data = self.R_FETCH.get_current_data()
-        if self._check_key(current_data, GpsRedisKeys.KEY_LATITUDE):
-            self._set_latitude(current_data[GpsRedisKeys.KEY_LATITUDE])
-        else:
-            self._set_latitude(-360)
-
-        if self._check_key(current_data, GpsRedisKeys.KEY_LONGITUDE):
-            self._set_longitude(current_data[GpsRedisKeys.KEY_LONGITUDE])
-        else:
-            self._set_longitude(-360)
+        # if self._check_key(current_data, GpsRedisKeys.KEY_LATITUDE):
+        #     self._set_latitude(current_data[GpsRedisKeys.KEY_LATITUDE])
+        # else:
+        #     self._set_latitude(-360)
+        #
+        # if self._check_key(current_data, GpsRedisKeys.KEY_LONGITUDE):
+        #     self._set_longitude(current_data[GpsRedisKeys.KEY_LONGITUDE])
+        # else:
+        #     self._set_longitude(-360)
 
         if self._check_key(current_data, GpsRedisKeys.KEY_SPEED_KMH):
             self._set_speed(current_data[GpsRedisKeys.KEY_SPEED_KMH], False)
@@ -258,12 +267,16 @@ class GpsApp(pqApp):
             f_val = float(val)
             if isnan(f_val) or (val == -1):
                 self._speedLabel.settext('  0')
+                self._speedGraph.add_data_point(0)
             else:
                 self._speedLabel.settext('{:>3.0f}'.format(f_val))
+                self._speedGraph.add_data_point(f_val)
         except (ValueError, TypeError):
             log('Speed given could not be converted to float: {}'.format(val))
             self._speedLabel.settext('  0')
+            self._speedGraph.add_data_point(0)
 
+        # self._speedGraph.add_data_point(datetime.now().second)
         self._speedUnitLabel.settext(' mph' if imperial else 'km/h')
 
     def _set_latitude(self, val):
