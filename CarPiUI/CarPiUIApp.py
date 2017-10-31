@@ -261,11 +261,11 @@ class CarPiUIApp(pqApp):
         """
         Runs every frame
         """
-        self._time_label.settext(strftime('%H:%M'))
+        self._time_label.settext(strftime('%H:%M'))  # Time is the most important thing!
 
         new_data = self._fetcher.get_current_data()
         self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
-        self._set_networking_data(new_data)
+        self._set_networking_data(new_data)  # Networking is kept alive all the time
 
     def shutdown(self):
         try:
