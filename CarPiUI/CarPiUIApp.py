@@ -53,7 +53,7 @@ IMG_WIFI3 = path.join('res', 'img', 'wifi3.png')
 class CarPiUIApp(pqApp):
     def __init__(self,
                  rect,
-                 redis_connection,
+                 redis,
                  title='CarPi',
                  fullscreen=False):
         log("Initializing CarPiUIApp ...")
@@ -66,7 +66,7 @@ class CarPiUIApp(pqApp):
         self.image_store = {}
         self._pages = {}
         self._fetcher = None  # type: RedisBackgroundFetcher
-        self._redis = redis_connection  # type: Redis
+        self._redis = redis  # type: Redis
 
         # Tabs
         self._gps_tab_button = None  # type: Button
