@@ -26,6 +26,7 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
+from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget
 from PygameUtils import load_image
 from RedisUtils import RedisBackgroundFetcher
@@ -51,6 +52,10 @@ IMG_WIFI3 = path.join('res', 'img', 'wifi3.png')
 
 
 class CarPiUIApp(pqApp):
+    PAGE_GPS = 'GPS'
+    PAGE_CLOCK = 'Clock'
+    PAGE_SETTINGS = 'Settings'
+
     def __init__(self,
                  rect,
                  redis,
@@ -65,6 +70,8 @@ class CarPiUIApp(pqApp):
         # Internal Data Storage & Processing
         self.image_store = {}
         self._pages = {}
+        self._redis_pages = {}
+        self._current_page = None  # type: str
         self._fetcher = None  # type: RedisBackgroundFetcher
         self._redis = redis  # type: Redis
 
@@ -94,7 +101,7 @@ class CarPiUIApp(pqApp):
         # Init Controls
         self._init_controls()
 
-        # Create Pages
+        # Define UI Pages
         gps_page = [
             self._speed_label,
             self._speed_graph,
@@ -103,9 +110,62 @@ class CarPiUIApp(pqApp):
         clock_page = []
         settings_page = []
 
-        self._pages['GPS'] = gps_page
-        self._pages['Clock'] = clock_page
-        self._pages['Settings'] = settings_page
+        self._pages[CarPiUIApp.PAGE_GPS] = gps_page
+        self._pages[CarPiUIApp.PAGE_CLOCK] = clock_page
+        self._pages[CarPiUIApp.PAGE_SETTINGS] = settings_page
+
+        # Define Redis Pages
+        gps_r_page = [
+            # Alive Keys
+            GpsRedisKeys.KEY_ALIVE,
+            NetworkInfoRedisKeys.KEY_ALIVE,
+
+            # Always present keys
+            NetworkInfoRedisKeys.KEY_ETH0_IP,
+            NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN0_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN1_SSID,
+
+            # Specific Keys
+            GpsRedisKeys.KEY_SPEED_KMH,
+            GpsRedisKeys.KEY_EPX,
+            GpsRedisKeys.KEY_EPY
+        ]
+        clock_r_page = [
+            # Alive Keys
+            GpsRedisKeys.KEY_ALIVE,
+            NetworkInfoRedisKeys.KEY_ALIVE,
+
+            # Always present keys
+            NetworkInfoRedisKeys.KEY_ETH0_IP,
+            NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN0_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN1_SSID,
+
+            # Specific Keys
+            GpsRedisKeys.KEY_SPEED_KMH
+        ]
+        settings_r_page = [
+            # Alive Keys
+            GpsRedisKeys.KEY_ALIVE,
+            NetworkInfoRedisKeys.KEY_ALIVE,
+
+            # Always present keys
+            NetworkInfoRedisKeys.KEY_ETH0_IP,
+            NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN0_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN1_SSID,
+
+            # Specific Keys
+            GpsRedisKeys.KEY_SPEED_KMH
+        ]
+
+        self._redis_pages[CarPiUIApp.PAGE_GPS] = gps_r_page
+        self._redis_pages[CarPiUIApp.PAGE_CLOCK] = clock_r_page
+        self._redis_pages[CarPiUIApp.PAGE_SETTINGS] = settings_r_page
 
     def _load(self):
         self.load_image(IMG_ETHERNET_OFF)
@@ -191,13 +251,25 @@ class CarPiUIApp(pqApp):
                                 }).pack()
 
     def main(self):
-        pass
+        """
+        Runs at startup
+        """
+        self.show_page(CarPiUIApp.PAGE_GPS)
+        self._fetcher.start()
 
     def update(self):
+        """
+        Runs every frame
+        """
         self._time_label.settext(strftime('%H:%M'))
+
+        new_data = self._fetcher.get_current_data()
+        self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
+        self._set_networking_data(new_data)
 
     def shutdown(self):
         try:
+            self._fetcher.stop_safe()
             log("Shutting down CarPiUIApp ...")
             self.destroy()
         finally:
@@ -209,26 +281,106 @@ class CarPiUIApp(pqApp):
                 if control:
                     control.setvisible(name == page_name)
 
+        self._fetcher.keys_to_fetch = self._redis_pages[page_name]
+        self._current_page = page_name
+
     def _gps_tab_button_command(self, e):
         self._gps_tab_button.setstate(0)
         self._clock_tab_button.setstate(1)
         self._settings_tab_button.setstate(1)
 
-        self.show_page('GPS')
+        self.show_page(CarPiUIApp.PAGE_GPS)
 
     def _clock_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
         self._clock_tab_button.setstate(0)
         self._settings_tab_button.setstate(1)
 
-        self.show_page('Clock')
+        self.show_page(CarPiUIApp.PAGE_CLOCK)
 
     def _settings_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
         self._clock_tab_button.setstate(1)
         self._settings_tab_button.setstate(0)
 
-        self.show_page('Settings')
+        self.show_page(CarPiUIApp.PAGE_SETTINGS)
+
+    def _set_speed_metrical(self, data):
+        """
+        :param dict of str, str data:
+        """
+        if GpsRedisKeys.KEY_SPEED_KMH not in data:
+            self._set_speed(0)
+        else:
+            speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
+            self._set_speed(float(speed_str))
+
+    def _set_speed(self, speed):
+        """
+        :param float speed:
+        """
+        self._speed_label.settext('{:>3.0f}'.format(speed))
+        self._speed_graph.add_data_point(speed)
+
+    def _set_networking_data(self, data):
+        """
+        :param dict of str, str data:
+        """
+        if NetworkInfoRedisKeys.KEY_ETH0_IP in data:
+            eth_ip = data[NetworkInfoRedisKeys.KEY_ETH0_IP]
+            self._set_ethernet_data(eth_ip is not None and eth_ip != '127.0.0.1' and eth_ip != '::1')
+        else:
+            self._set_ethernet_data(False)
+
+        if NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH in data \
+                and NetworkInfoRedisKeys.KEY_WLAN0_SSID in data:
+            strength_str = data[NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH]
+            ssid = data[NetworkInfoRedisKeys.KEY_WLAN0_SSID]
+
+            strength = -2
+            if ssid is not None:
+                strength = int(strength_str) if strength_str else 0
+
+            self._set_wlan_data(self._wlan0_status_icon, strength)
+        else:
+            self._set_wlan_data(self._wlan0_status_icon, -2)
+
+        if NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH in data \
+                and NetworkInfoRedisKeys.KEY_WLAN1_SSID in data:
+            strength_str = data[NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH]
+            ssid = data[NetworkInfoRedisKeys.KEY_WLAN1_SSID]
+
+            strength = -2
+            if ssid is not None:
+                strength = int(strength_str) if strength_str else 0
+
+            self._set_wlan_data(self._wlan1_status_icon, strength)
+        else:
+            self._set_wlan_data(self._wlan1_status_icon, -2)
+
+    def _set_ethernet_data(self, connected):
+        """
+        :param bool connected:
+        """
+        self._ethernet_status_icon.setimage(self.get_image(IMG_ETHERNET if connected else IMG_ETHERNET_OFF))
+
+    def _set_wlan_data(self, wlan_status_image, strength):
+        """
+        :param Image wlan_status_image:
+        :param int strength: -2 for disconnected, -1 for unknown
+        """
+        image = IMG_WIFI_OFF
+        if strength < -1:
+            pass  # already set for OFF
+        elif strength < 25:
+            image = IMG_WIFI0
+        elif strength < 50:
+            image = IMG_WIFI1
+        elif strength < 75:
+            image = IMG_WIFI2
+        else:
+            image = IMG_WIFI3
+        wlan_status_image.setimage(self.get_image(image))
 
 
 if __name__ == "__main__":
