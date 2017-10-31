@@ -22,7 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from datetime import datetime
 from time import sleep
+
+import pytz
 
 from CarPiLogging import log, boot_print, end_print, get_utc_now, print_unhandled_exception, EXIT_CODES
 from CarPiConfig import init_config_env
@@ -98,7 +101,8 @@ class GpsPoint(object):
             GpsRedisKeys.KEY_SPEED: self._fix.speed,
             GpsRedisKeys.KEY_SPEED_KMH: (self._fix.speed * 3.6),
             GpsRedisKeys.KEY_SPEED_MPH: (self._fix.speed * 2.23694),
-            GpsRedisKeys.KEY_LAST_UPDATED: get_utc_now()
+            GpsRedisKeys.KEY_LAST_UPDATED: get_utc_now(),
+            GpsRedisKeys.KEY_ALIVE: datetime.now(pytz.utc)
         }
 
 

@@ -44,7 +44,10 @@ class GpsRedisKeys:
     KEY_SPEED_MPH = 'GPS.Speed.MPH'  # type: str
     KEY_LAST_UPDATED = 'GPS.LastUpdated'  # type: str
 
+    KEY_ALIVE = 'DaemonAlive.GPS'  # type: str
+
     KEYS = [
+        KEY_ALIVE,
         KEY_LATITUDE,
         KEY_LONGITUDE,
         KEY_ALTITUDE,
@@ -67,15 +70,18 @@ class GpsRedisKeys:
 
 
 class NetworkInfoRedisKeys:
-    KEY_ETH0_IP = 'Net.eth0.IP'
-    KEY_WLAN0_IP = 'Net.wlan0.IP'
-    KEY_WLAN0_STRENGTH = 'Net.wlan0.Strength'
-    KEY_WLAN0_SSID = 'Net.wlan0.SSID'
-    KEY_WLAN1_IP = 'Net.wlan1.IP'
-    KEY_WLAN1_STRENGTH = 'Net.wlan1.Strength'
-    KEY_WLAN1_SSID = 'Net.wlan1.SSID'
+    KEY_ETH0_IP = 'Net.eth0.IP'  # type: str
+    KEY_WLAN0_IP = 'Net.wlan0.IP'  # type: str
+    KEY_WLAN0_STRENGTH = 'Net.wlan0.Strength'  # type: str
+    KEY_WLAN0_SSID = 'Net.wlan0.SSID'  # type: str
+    KEY_WLAN1_IP = 'Net.wlan1.IP'  # type: str
+    KEY_WLAN1_STRENGTH = 'Net.wlan1.Strength'  # type: str
+    KEY_WLAN1_SSID = 'Net.wlan1.SSID'  # type: str
+
+    KEY_ALIVE = 'DaemonAlive.Net'  # type: str
 
     KEYS = [
+        KEY_ALIVE,
         KEY_ETH0_IP,
         KEY_WLAN0_IP,
         KEY_WLAN0_STRENGTH,

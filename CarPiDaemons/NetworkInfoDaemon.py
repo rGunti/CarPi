@@ -36,6 +36,8 @@ from array import array
 from struct import pack, unpack
 from fcntl import ioctl
 from subprocess import Popen, PIPE
+from datetime import datetime
+import pytz
 
 APP_NAME = path.basename(__file__)
 
@@ -199,6 +201,7 @@ if __name__ == "__main__":
                         r_data[NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH] = wifi_data['strength']
                         r_data[NetworkInfoRedisKeys.KEY_WLAN1_SSID] = wifi_data['ssid']
 
+                r_data[NetworkInfoRedisKeys.KEY_ALIVE] = datetime.now(pytz.utc)
                 set_piped(R, r_data)
             sleep(CONFIG_DATAPOLLER_INTERVAL)
     except (KeyboardInterrupt, SystemExit):
