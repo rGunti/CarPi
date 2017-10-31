@@ -103,7 +103,7 @@ DEFAULT_STYLE = {
     BD_ACTIVE: (0, 0, 0),
 # Can be a color for the border around the widget when active, or None to display no border when active
 
-    BG_COLOR: (0, 0, 0), # (212, 208, 200),
+    BG_COLOR: (0, 0, 0),  # (212, 208, 200),
     BG_BRIGHT: (255, 255, 255),
     BG_LIGHT: (233, 231, 227),
     BG_SELECT: (10, 36, 106),
@@ -632,6 +632,7 @@ class Widget(pygame.Rect):
                 self.style = defaultstyle
         self.binds = {}
         self.state = state
+        self.visible = True
         pygame.Rect.__init__(self, rect)
 
     def pack(self):
@@ -639,6 +640,8 @@ class Widget(pygame.Rect):
         return self
 
     def draw(self, screen, position, bg=True):
+        if not self.visible:
+            return
         if isinstance(self.window, Window):
             active = self.window.active == self
         else:
@@ -677,7 +680,12 @@ class Widget(pygame.Rect):
     def setstate(self, state):
         self.state = state
 
+    def setvisible(self, visible):
+        self.visible = visible
+
     def execbind(self, event):
+        if not self.visible:
+            return
         if isinstance(event, dict):
             event = pqEvent(event)
         if event.type in self.binds:
@@ -693,6 +701,8 @@ class Widget(pygame.Rect):
                 callback(event)
 
     def process_event(self, event, mouseover=[]):
+        if not self.visible:
+            return
         if event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEDOUBLECLICK]:
             if event.type == MOUSEBUTTONDOWN and self.steal_focus:
                 self.window.active = self
@@ -740,6 +750,8 @@ class Canvas(Widget):
             self.surface.fill(bg)
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         screen.blit(self.surface, (self.x + position[0], self.y + position[1]))
 
@@ -771,6 +783,8 @@ class Button(Widget):
             self.settext(self.text)
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         down = 0
         if self.app.pressed == self:
@@ -805,10 +819,12 @@ class Button(Widget):
             screen.blit(icon, (mid[0] - width / 2 + down, mid[1] - icon.get_height() / 2 + down))
 
     def callback(self, event):
-        if self.command and self.state == ENABLED:
+        if self.command and self.state == ENABLED and self.visible:
             self.command(event)
 
     def process_event(self, event, mouseover=[]):
+        if not self.visible:
+            return
         if event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN]:
             if event.type == MOUSEBUTTONDOWN and event.button == M_LEFT:
                 if self.steal_focus:
@@ -844,6 +860,8 @@ class Radio(Widget):
         self.text_render = [restrict_text(text, self.style, self.size, offsets=(18, 4)), None]
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         position = [position[0] + self.x, position[1] + self.y + self.height / 2]
         if self.state == DISABLED:
@@ -868,10 +886,12 @@ class Radio(Widget):
                                (position[0], position[1]), 2)
 
     def callback(self, event):
-        if self.state == ENABLED:
+        if self.state == ENABLED and self.visible:
             self.variable.set(self.value)
 
     def process_event(self, event, mouseover=[]):
+        if not self.visible:
+            return
         if event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN]:
             if event.type == MOUSEBUTTONDOWN and event.button == M_LEFT:
                 if self.steal_focus:
@@ -903,6 +923,8 @@ class Check(Radio):
     # self.text_render = [restrict_text(text, self.style, self.size, offsets=(18,4)),None]
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         position = [position[0] + self.x, position[1] + self.y + self.height / 2]
         if self.state == DISABLED:
@@ -922,7 +944,7 @@ class Check(Radio):
             screen.blit(self.check, (position[0] + 3, position[1] - 4))
 
     def callback(self, event):
-        if self.state == ENABLED:
+        if self.state == ENABLED and self.visible:
             if self.variable.get() == self.value:
                 self.variable.set(self.offvalue)
             else:
@@ -959,6 +981,8 @@ class Box(Widget):
         self.text_render = restrict_text(text, self.style, self.size, bg=True)
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         realrect = self.move(position)
         offset = 0
         if self.text_render:
@@ -1020,6 +1044,9 @@ class Graph(Widget):
         return int(ceil(v / 10.0)) * 10
 
     def draw(self, screen, position, bg=True):
+        if not self.visible:
+            return
+
         Widget.draw(self, screen, position)
 
         # Draw Data
@@ -1059,7 +1086,7 @@ class Text(Widget):
     widget_name = 'Text'
 
     # wrap: none, char, word
-    def __init__(self, parent, rect, text, style=None, wrap=WRAP_WORD, state=ENABLED):
+    def __init__(self, parent, rect, text, style=None, wrap=WRAP_CHAR, state=ENABLED):
         self.wrap = wrap
         Widget.__init__(self, parent, rect, style, state)
         self.settext(text)
@@ -1069,6 +1096,8 @@ class Text(Widget):
         self.text_render = restrict_text(text, self.style, self.size, self.wrap)
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         if self.text_render:
             screen.blit(self.text_render, (self.x + position[0], self.y + position[1]))
@@ -1110,6 +1139,8 @@ class RichText(Widget):
         max(self.text_render.get_width(), self.view.width), max(self.text_render.get_height(), self.view.height))
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         Widget.draw(self, screen, position)
         if self.text_render:
             container = pygame.Surface(self.size)
@@ -1138,6 +1169,8 @@ class Container(Widget):
         self.view.topleft = (self.x + view[0], self.y + view[1])
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         realrect = self.move(position)
         Widget.draw(self, screen, position)
         container = pygame.Surface(self.size)
@@ -1160,6 +1193,8 @@ class Container(Widget):
                     self.yscroll.setbar((self.view.y / float(maxy), self.view.bottom / float(maxy)), False)
 
     def process_event(self, event, mouseover=[]):
+        if not self.visible:
+            return
         if event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEDOUBLECLICK]:
             if not self in self.app.mouseover:
                 self.execbind({'type': MOUSEENTER, 'pos': (event.pos[0] - self.x, event.pos[1] - self.y)})
@@ -1198,6 +1233,8 @@ class ScrollbarBar(Widget):
         Widget.__init__(self, parent, ((2, 2), (12, 12)), style)
 
     def process_event(self, event, mouseover=[]):
+        if not self.visible:
+            return
         if event.type == MOUSEBUTTONDOWN and event.button == M_LEFT:
             self.app.drag = self
             self.app.dragoffset = event.pos
@@ -1295,6 +1332,8 @@ class Scrollbar(Container):
                 self.viewwidget.yview(self.bar[0] / (1 - (self.bar[1] - self.bar[0])))
 
     def draw(self, screen, position):
+        if not self.visible:
+            return
         realrect = self.move(position)
         Widget.draw(self, screen, position)
         container = pygame.Surface(self.size)

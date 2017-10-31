@@ -26,14 +26,63 @@ SOFTWARE.
 import pygame
 from os import environ
 from CarPiLogging import log
+from ConfigParser import ConfigParser
+
+IO_CONFIG_SECTION = 'IO'
+IO_CONFIG_KEY_OUTPUT_DEVICE = 'output'
+IO_CONFIG_KEY_MOUSE_DRIVER = 'mouse_driver'
+IO_CONFIG_KEY_MOUSE_DEVICE = 'mouse_device'
+
+ENV_OUTPUT = 'SDL_FBDEV'
+ENV_MOUSE_DRIVER = 'SDL_MOUSEDRV'
+ENV_MOUSE_DEVICE = 'SDL_MOUSEDEV'
+
+UI_CONFIG_SECTION = 'UI'
+UI_CONFIG_KEY_SHOW_MOUSE = 'show_mouse'
+UI_CONFIG_KEY_FULLSCREEN = 'fullscreen'
+UI_CONFIG_KEY_RES_WIDTH = 'res_width'
+UI_CONFIG_KEY_RES_HEIGHT = 'res_height'
 
 
-def init_pygame():
+def init_pygame(config):
+    """
+    :param ConfigParser config:
+    :return:
+    """
     log('Initializing PyGame ...')
     pygame.init()
 
-    pygame.mouse.set_visible(environ.get('SHOW_MOUSE', '0') == '1')
-    pygame.display.set_mode((320, 240))
+    mouse_visible = False
+    if config.has_option(UI_CONFIG_SECTION, UI_CONFIG_KEY_SHOW_MOUSE):
+        mouse_visible = config.getboolean(UI_CONFIG_SECTION,
+                                          UI_CONFIG_KEY_SHOW_MOUSE)
+
+    pygame.mouse.set_visible(mouse_visible)
+    pygame.display.set_mode((config.getint(UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_WIDTH),
+                             config.getint(UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_HEIGHT)))
+
+
+def init_io(config):
+    """
+    :param ConfigParser config:
+    :return:
+    """
+    log("Configuring PyGame IO ...")
+
+    if ENV_OUTPUT not in environ:
+        if config.has_option(IO_CONFIG_SECTION, IO_CONFIG_KEY_OUTPUT_DEVICE):
+            environ[ENV_OUTPUT] = config.get(IO_CONFIG_SECTION,
+                                             IO_CONFIG_KEY_OUTPUT_DEVICE)
+
+    if ENV_MOUSE_DEVICE not in environ:
+        if config.has_option(IO_CONFIG_SECTION, IO_CONFIG_KEY_MOUSE_DEVICE):
+            environ[ENV_MOUSE_DEVICE] = config.get(IO_CONFIG_SECTION,
+                                                   IO_CONFIG_KEY_MOUSE_DEVICE)
+
+    if ENV_MOUSE_DRIVER not in environ:
+        if config.has_option(IO_CONFIG_SECTION, IO_CONFIG_KEY_MOUSE_DRIVER):
+            environ[ENV_MOUSE_DRIVER] = config.get(IO_CONFIG_SECTION,
+                                                   IO_CONFIG_KEY_MOUSE_DRIVER)
 
 
 def load_image(path, convert_alpha=True):
