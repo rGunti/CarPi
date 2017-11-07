@@ -92,6 +92,32 @@ class NetworkInfoRedisKeys:
     ]
 
 
+class MpdDataRedisKeys:
+    KEY_STATE = 'MPD.State'  # type: str
+    KEY_SONG_TITLE = 'MPD.CurrentSong.Title'  # type: str
+    KEY_SONG_ARTIST = 'MPD.CurrentSong.Artist'  # type: str
+    KEY_SONG_ALBUM = 'MPD.CurrentSong.Album'  # type: str
+    KEY_SONG_LENGTH = 'MPD.CurrentSong.Length'  # type: str
+    KEY_SONG_LENGTH_FORMATTED = 'MPD.CurrentSong.Length.Formatted'  # type: str
+    KEY_CURRENT_TIME = 'MPD.CurrentTime'  # type: str
+    KEY_CURRENT_TIME_FORMATTED = 'MPD.CurrentTime.Formatted'  # type: str
+    KEY_VOLUME = 'MPD.Volume'  # type: str
+    KEY_RANDOM = 'MPD.Random'  # type: str
+    KEY_REPEAT = 'MPD.Repeat'  # type: str
+
+    KEY_ALIVE = 'DaemonAlive.MPD'  # type: str
+
+    KEYS = [
+        KEY_ALIVE,
+        KEY_SONG_TITLE,
+        KEY_SONG_ARTIST,
+        KEY_SONG_ALBUM,
+        KEY_CURRENT_TIME,
+        KEY_CURRENT_TIME_FORMATTED,
+        KEY_VOLUME
+    ]
+
+
 def prepare_dict(keys, default_value=None):
     dict = {}
     for key in keys:
