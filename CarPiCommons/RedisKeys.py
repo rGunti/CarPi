@@ -118,6 +118,30 @@ class MpdDataRedisKeys:
     ]
 
 
+class MpdCommandRedisKeys:
+    KEY_ALIVE = MpdDataRedisKeys.KEY_ALIVE
+
+    # Commands
+    COMMAND_PLAY = 'CommandRequest(MPD.Play)'
+    COMMAND_PAUSE = 'CommandRequest(MPD.Pause)'
+    COMMAND_STOP = 'CommandRequest(MPD.Stop)'
+
+    # Parameters
+    # COMMAND_PAUSE
+    PARAM_PAUSE_VALUE = 'PauseValue'
+
+    COMMANDS = [
+        COMMAND_PLAY,
+        COMMAND_PAUSE,
+        COMMAND_STOP
+    ]
+    PARAMS = {
+        # COMMAND_PLAY: [],
+        COMMAND_PAUSE: [ PARAM_PAUSE_VALUE ],
+        # COMMAND_STOP: []
+    }
+
+
 def prepare_dict(keys, default_value=None):
     dict = {}
     for key in keys:

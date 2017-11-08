@@ -34,8 +34,8 @@ from CarPiConfig import init_config_env
 from CarPiLogging import EXIT_CODES, boot_print, end_print, log, print_unhandled_exception
 from CarPiThreading import CarPiThread
 from CarPiUtils import format_mpd_status_time
-from RedisKeys import MpdDataRedisKeys
-from RedisUtils import get_redis, set_piped
+from RedisKeys import MpdDataRedisKeys, MpdCommandRedisKeys
+from RedisUtils import get_redis, set_piped, CarPiControlThread
 from redis import exceptions as redis_exceptions
 
 APP_NAME = path.basename(__file__)
@@ -48,10 +48,11 @@ class MpdDataPoller(CarPiThread):
         :param int interval:
         """
         CarPiThread.__init__(self, interval)
-        self._mpd = self._init_mpd(config)
+        self._mpd = MpdDataPoller.init_mpd(config)
         self._data = {}
 
-    def _init_mpd(self, config):
+    @staticmethod
+    def init_mpd(config):
         """
         :param ConfigParser.ConfigParser config:
         :return MPDClient:
@@ -92,6 +93,36 @@ class MpdDataPoller(CarPiThread):
         return self._data
 
 
+class MpdControlThread(CarPiControlThread):
+    def __init__(self, config, redis, interval):
+        CarPiControlThread.__init__(self,
+                                    redis,
+                                    MpdCommandRedisKeys.COMMANDS,
+                                    MpdCommandRedisKeys.PARAMS,
+                                    interval)
+        self._mpd = MpdDataPoller.init_mpd(config)
+
+    def _map_command_implementations(self, commands):
+        return {
+            MpdCommandRedisKeys.COMMAND_PLAY: self._execute_play,
+            MpdCommandRedisKeys.COMMAND_PAUSE: self._execute_pause,
+            MpdCommandRedisKeys.COMMAND_STOP: self._execute_stop
+        }
+
+    def _execute_play(self):
+        self._mpd.play()
+
+    def _execute_pause(self, params):
+        """
+        :param dict of str, str params:
+        """
+        param_pause = params.get(MpdCommandRedisKeys.PARAM_PAUSE_VALUE, '1')
+        self._mpd.pause(int(param_pause) if param_pause else 1)
+
+    def _execute_stop(self):
+        self._mpd.stop()
+
+
 def delete_alive_key(r):
     """
     :param Redis r:
@@ -110,6 +141,7 @@ if __name__ == "__main__":
     boot_print(APP_NAME)
 
     CONFIG_DATAPOLLER_INTERVAL = CONFIG.getfloat('DataPoller', 'interval') / 1000
+    CONFIG_CONTROLLER_INTERVAL = CONFIG.getfloat('Controller', 'interval') / 1000
 
     log("Connecting to MPD ...")
     MPD_DATA_THREAD = MpdDataPoller(CONFIG, CONFIG_DATAPOLLER_INTERVAL)
@@ -117,6 +149,10 @@ if __name__ == "__main__":
 
     log("Initializing Redis Connection ...")
     R = get_redis(CONFIG)
+
+    log("Initializing Control Thread ...")
+    MPD_CONTROL = MpdControlThread(CONFIG, R, CONFIG_CONTROLLER_INTERVAL)
+    MPD_CONTROL.start()
 
     try:
         log("MPD Data & Control Daemon is running ...")
@@ -139,6 +175,7 @@ if __name__ == "__main__":
     finally:
         delete_alive_key(R)
         MPD_DATA_THREAD.stop_safe(5)
+        MPD_CONTROL.stop_safe(5)
 
     end_print()
     exit(EXIT_CODE)

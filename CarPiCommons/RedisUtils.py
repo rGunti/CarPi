@@ -38,6 +38,7 @@ RCONFIG_KEY_DB = 'db'
 RCONFIG_KEY_EXPIRE = 'expire'
 
 RCONFIG_VALUE_EXPIRE = None
+RCONFIG_VALUE_EXPIRE_COMMANDS = 5
 
 
 def get_redis(config):
@@ -112,6 +113,87 @@ def set_piped(r, data_dict):
     return result_dict
 
 
+def get_command_param_key(command, param_name):
+    return command + '.Param:' + param_name
+
+
+def send_command_request(r, command, params=None):
+    """
+    Creates a new Command Request and sends it to Redis for
+    a request processor to process
+    :param Redis r: Redis instance
+    :param str command: Command Name
+    :param dict of str, object params: Optional Command params
+    :return:
+    """
+    pipe = r.pipeline()
+    pipe.set(command, True, ex=RCONFIG_VALUE_EXPIRE_COMMANDS)
+    if params:
+        for key, value in params.iteritems():
+            if value is not None:
+                param_key = get_command_param_key(command, key)
+                pipe.set(param_key, value, ex=RCONFIG_VALUE_EXPIRE_COMMANDS)
+
+    pipe.execute()
+
+
+def set_command_as_handled(r, command):
+    """
+    Removes a Command Request from Redis and thus marks it as handled
+    :param Redis r: Redis instance
+    :param str command: Command Name
+    """
+    pipe = r.pipeline()
+    pipe.delete(command)
+    pipe.execute()
+
+
+def get_command_params(r, command, params, delete_after_request=True):
+    """
+    Returns one or more parameters of a given command
+    :param Redis r: Redis instance
+    :param str command: Command Name
+    :param str|list of str params: Paramter Name or list of Parameter Names to request
+    :param bool delete_after_request: If True, all requested parameters will be deleted after execution
+    :return str|dict of str, str:
+    """
+    if isinstance(params, list):
+        output = {}
+        keys = []
+        key_map = {}
+
+        for key in params:
+            output[key] = None
+            param_key = get_command_param_key(command, key)
+            keys.append(param_key)
+            key_map[param_key] = key
+
+        out = get_piped(r, keys)
+
+        for key, value in out.iteritems():
+            output[key_map[key]] = value
+
+        if delete_after_request:
+            pipe = r.pipeline()
+            for key in keys:
+                r.delete(key)
+            pipe.execute()
+
+        return output
+    else:
+        return r.get(get_command_param_key(command, params))
+
+
+def check_command_requests(r, commands):
+    """
+    Checks a list of commands for a pending request
+    :param Redis r: Redis instance
+    :param list of str commands: List of Commands
+    :return:
+    """
+    return get_piped(r, commands)
+
+
 class RedisBackgroundFetcher(CarPiThread):
     """
     Redis Background Data Fetcher
@@ -160,6 +242,65 @@ class RedisBackgroundFetcher(CarPiThread):
         except SystemExit:
             log("SystemExit has been requested, stopping Fetcher Thread ...")
             self._running = False
+
+
+class CarPiControlThread(CarPiThread):
+    def __init__(self, redis, commands, parameters, interval):
+        """
+        :param Redis redis: Redis instance
+        :param list of str commands:
+        :param dict of str, list of str parameters:
+        :param int|float interval:
+        """
+        CarPiThread.__init__(self, interval)
+        self._redis = redis
+        self._commands = commands  # type: list str
+        self._parameters = parameters  # type: dict str, list str
+
+        self._command_implementation = self._map_command_implementations(commands)  # type: dict str, function
+
+    def _map_command_implementations(self, commands):
+        """
+        :param list of str commands:
+        :return dict of str, function:
+        """
+        raise NotImplementedError
+
+    def _do(self):
+        commands_to_execute = {}
+
+        # Get all commands which are requested
+        requested_commands = check_command_requests(self._redis, self._commands)
+        for command, val in requested_commands.iteritems():
+            if not val:
+                continue
+            if command in self._parameters:
+                # Get Parameter Values
+                params = self._parameters[command]
+                commands_to_execute[command] = get_command_params(self._redis,
+                                                                  command,
+                                                                  params)
+            else:
+                # Execute without Parameters
+                commands_to_execute[command] = True
+
+        # Execute Commands
+        for command, params in commands_to_execute.iteritems():
+            if isinstance(params, dict):
+                self._execute_command(command, params)
+            else:
+                self._execute_command(command)
+            set_command_as_handled(self._redis, command)
+
+    def _execute_command(self, command, params=None):
+        if command in self._command_implementation:
+            fun = self._command_implementation[command]
+            if params:
+                fun(params)
+            else:
+                fun()
+        else:
+            log("No function found for Redis Command {}!".format(command))
 
 
 if __name__ == "__main__":
