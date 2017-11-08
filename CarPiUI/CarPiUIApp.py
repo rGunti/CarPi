@@ -26,7 +26,7 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
-from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys
+from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget
 from PygameUtils import load_image
 from RedisUtils import RedisBackgroundFetcher
@@ -53,7 +53,7 @@ IMG_WIFI3 = path.join('res', 'img', 'wifi3.png')
 
 class CarPiUIApp(pqApp):
     PAGE_GPS = 'GPS'
-    PAGE_CLOCK = 'Clock'
+    PAGE_MUSIC = 'Clock'
     PAGE_SETTINGS = 'Settings'
 
     def __init__(self,
@@ -77,7 +77,7 @@ class CarPiUIApp(pqApp):
 
         # Tabs
         self._gps_tab_button = None  # type: Button
-        self._clock_tab_button = None  # type: Button
+        self._music_tab_button = None  # type: Button
         self._settings_tab_button = None  # type: Button
 
         # GPS Data
@@ -92,8 +92,12 @@ class CarPiUIApp(pqApp):
         self._ethernet_status_icon = None  # type: Image
         self._wlan0_status_icon = None  # type: Image
         self._wlan1_status_icon = None  # type: Image
-
         self._time_label = None  # type: Text
+
+        # Music Display
+        self._current_title = None  # type: Text
+        self._current_artist = None  # type: Text
+        self._current_album = None  # type: Text
 
         # Load Resources
         self._load()
@@ -107,11 +111,15 @@ class CarPiUIApp(pqApp):
             self._speed_graph,
             self._speed_unit
         ]
-        clock_page = []
+        music_page = [
+            self._current_title,
+            self._current_artist,
+            self._current_album
+        ]
         settings_page = []
 
         self._pages[CarPiUIApp.PAGE_GPS] = gps_page
-        self._pages[CarPiUIApp.PAGE_CLOCK] = clock_page
+        self._pages[CarPiUIApp.PAGE_MUSIC] = music_page
         self._pages[CarPiUIApp.PAGE_SETTINGS] = settings_page
 
         # Define Redis Pages
@@ -119,6 +127,7 @@ class CarPiUIApp(pqApp):
             # Alive Keys
             GpsRedisKeys.KEY_ALIVE,
             NetworkInfoRedisKeys.KEY_ALIVE,
+            MpdDataRedisKeys.KEY_ALIVE,
 
             # Always present keys
             NetworkInfoRedisKeys.KEY_ETH0_IP,
@@ -127,15 +136,17 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
-            # Specific Keys
             GpsRedisKeys.KEY_SPEED_KMH,
+
+            # Specific Keys
             GpsRedisKeys.KEY_EPX,
             GpsRedisKeys.KEY_EPY
         ]
-        clock_r_page = [
+        music_r_page = [
             # Alive Keys
             GpsRedisKeys.KEY_ALIVE,
             NetworkInfoRedisKeys.KEY_ALIVE,
+            MpdDataRedisKeys.KEY_ALIVE,
 
             # Always present keys
             NetworkInfoRedisKeys.KEY_ETH0_IP,
@@ -144,13 +155,20 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
+            GpsRedisKeys.KEY_SPEED_KMH,
+
             # Specific Keys
-            GpsRedisKeys.KEY_SPEED_KMH
+            MpdDataRedisKeys.KEY_SONG_TITLE,
+            MpdDataRedisKeys.KEY_SONG_ARTIST,
+            MpdDataRedisKeys.KEY_SONG_ALBUM,
+            MpdDataRedisKeys.KEY_CURRENT_TIME,
+            MpdDataRedisKeys.KEY_CURRENT_TIME_FORMATTED
         ]
         settings_r_page = [
             # Alive Keys
             GpsRedisKeys.KEY_ALIVE,
             NetworkInfoRedisKeys.KEY_ALIVE,
+            MpdDataRedisKeys.KEY_ALIVE,
 
             # Always present keys
             NetworkInfoRedisKeys.KEY_ETH0_IP,
@@ -159,12 +177,13 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
+            GpsRedisKeys.KEY_SPEED_KMH,
+
             # Specific Keys
-            GpsRedisKeys.KEY_SPEED_KMH
         ]
 
         self._redis_pages[CarPiUIApp.PAGE_GPS] = gps_r_page
-        self._redis_pages[CarPiUIApp.PAGE_CLOCK] = clock_r_page
+        self._redis_pages[CarPiUIApp.PAGE_MUSIC] = music_r_page
         self._redis_pages[CarPiUIApp.PAGE_SETTINGS] = settings_r_page
 
     def _load(self):
@@ -220,9 +239,9 @@ class CarPiUIApp(pqApp):
                                       style=STYLE_TAB_BUTTON,
                                       command=self._gps_tab_button_command,
                                       state=0).pack()
-        self._clock_tab_button = Button(self,
+        self._music_tab_button = Button(self,
                                         ((60, 205), (50, 30)),
-                                        'Clock',
+                                        'Music',
                                         style=STYLE_TAB_BUTTON,
                                         command=self._clock_tab_button_command).pack()
         self._settings_tab_button = Button(self,
@@ -250,6 +269,26 @@ class CarPiUIApp(pqApp):
                                     TEXT_FONT: (PATH_FONT_DOTMATRIX, 20)
                                 }).pack()
 
+        # Music Display
+        self._current_title = Text(self,
+                                   ((5, 5), (310, 30)),
+                                   '{Title}',
+                                   style={
+                                       TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                   }).pack()
+        self._current_artist = Text(self,
+                                    ((5, 40), (310, 30)),
+                                    '{Artist}',
+                                    style={
+                                        TEXT_FONT: (PATH_FONT_DEFAULT, 15)
+                                    }).pack()
+        self._current_album = Text(self,
+                                   ((5, 60), (310, 30)),
+                                   '{Album}',
+                                   style={
+                                       TEXT_FONT: (PATH_FONT_DEFAULT, 15)
+                                   }).pack()
+
     def main(self):
         """
         Runs at startup
@@ -266,6 +305,7 @@ class CarPiUIApp(pqApp):
         new_data = self._fetcher.get_current_data()
         self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
         self._set_networking_data(new_data)  # Networking is kept alive all the time
+        self._set_current_song_info(new_data)
 
     def shutdown(self):
         try:
@@ -286,21 +326,21 @@ class CarPiUIApp(pqApp):
 
     def _gps_tab_button_command(self, e):
         self._gps_tab_button.setstate(0)
-        self._clock_tab_button.setstate(1)
+        self._music_tab_button.setstate(1)
         self._settings_tab_button.setstate(1)
 
         self.show_page(CarPiUIApp.PAGE_GPS)
 
     def _clock_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
-        self._clock_tab_button.setstate(0)
+        self._music_tab_button.setstate(0)
         self._settings_tab_button.setstate(1)
 
-        self.show_page(CarPiUIApp.PAGE_CLOCK)
+        self.show_page(CarPiUIApp.PAGE_MUSIC)
 
     def _settings_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
-        self._clock_tab_button.setstate(1)
+        self._music_tab_button.setstate(1)
         self._settings_tab_button.setstate(0)
 
         self.show_page(CarPiUIApp.PAGE_SETTINGS)
@@ -313,7 +353,10 @@ class CarPiUIApp(pqApp):
             self._set_speed(0)
         else:
             speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
-            self._set_speed(float(speed_str))
+            try:
+                self._set_speed(float(speed_str))
+            except TypeError:
+                self._set_speed(speed=float(0))
 
     def _set_speed(self, speed):
         """
@@ -381,6 +424,26 @@ class CarPiUIApp(pqApp):
         else:
             image = IMG_WIFI3
         wlan_status_image.setimage(self.get_image(image))
+
+    def _set_current_song_info(self, data):
+        """
+        :param dict data:
+        """
+        if self._current_page != CarPiUIApp.PAGE_MUSIC:
+            return
+        if data.get(MpdDataRedisKeys.KEY_ALIVE, None):
+            self._set_current_song_tags(data.get(MpdDataRedisKeys.KEY_SONG_TITLE, None),
+                                        data.get(MpdDataRedisKeys.KEY_SONG_ARTIST, None),
+                                        data.get(MpdDataRedisKeys.KEY_SONG_ALBUM, None))
+        else:
+            self._set_current_song_tags('[Music Player not running]',
+                                        'Check MPD or Daemon',
+                                        None)
+
+    def _set_current_song_tags(self, title, artist, album):
+        self._current_title.settext(title if title else '')
+        self._current_artist.settext(artist if artist else '')
+        self._current_album.settext(album if album else '')
 
 
 if __name__ == "__main__":
