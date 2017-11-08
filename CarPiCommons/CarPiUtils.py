@@ -62,5 +62,24 @@ def format_mpd_status_time(v, both=False):
         return time_current
 
 
+def get_mpd_status_time(v):
+    """
+    Returns one or two float value from the given MPD-based time
+    :param str v: Value given from MPD (usually a string value with
+    2 integer values separated by a Colon ":", both values representing seconds)
+    :return str|Tuple:
+    """
+    arr_v = v.split(':')  # type: list str
+    out = []
+
+    for i, val in enumerate(arr_v):
+        out.append(float(val))
+
+    if len(out) > 1:
+        return out[0], out[1]
+    else:
+        return out[0]
+
+
 if __name__ == "__main__":
     print("This script is not intended to be run standalone!")

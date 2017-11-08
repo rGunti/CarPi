@@ -26,8 +26,10 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
+from CarPiUtils import get_mpd_status_time
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys
-from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget
+from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
+    ProgressBar
 from PygameUtils import load_image
 from RedisUtils import RedisBackgroundFetcher
 from os import path
@@ -101,6 +103,7 @@ class CarPiUIApp(pqApp):
 
         # Music Status
         self._current_song_time = None  # type: Text
+        self._current_song_time_bar = None  # type: ProgressBar
 
         # Load Resources
         self._load()
@@ -118,7 +121,8 @@ class CarPiUIApp(pqApp):
             self._current_title,
             self._current_artist,
             self._current_album,
-            self._current_song_time
+            self._current_song_time,
+            self._current_song_time_bar
         ]
         settings_page = []
 
@@ -295,11 +299,13 @@ class CarPiUIApp(pqApp):
 
         # Music Status
         self._current_song_time = Text(self,
-                                       ((150, 160), (170, 36)),
+                                       ((154, 160), (170, 36)),
                                        '--:--/--:--',
                                        style={
                                            TEXT_FONT: (PATH_FONT_7SEGM, 30)
                                        }).pack()
+        self._current_song_time_bar = ProgressBar(self,
+                                                  ((5, 190), (310, 5))).pack()
 
     def main(self):
         """
@@ -460,8 +466,12 @@ class CarPiUIApp(pqApp):
         self._current_artist.settext(artist if artist else '')
         self._current_album.settext(album if album else '')
 
-    def _set_current_song_time(self, int_time, format_time):
+    def _set_current_song_time(self, num_time, format_time):
         self._current_song_time.settext(format_time)
+
+        cur_time, max_time = get_mpd_status_time(num_time)
+        self._current_song_time_bar.set_max_value(max_time)
+        self._current_song_time_bar.set_value(cur_time)
 
 
 if __name__ == "__main__":

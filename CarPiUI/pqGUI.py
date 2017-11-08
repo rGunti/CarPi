@@ -1016,6 +1016,56 @@ class Image(Widget):
                                      self.y + position[1] + self.height / 2 - self.image.get_height() / 2))
 
 
+class ProgressBar(Widget):
+    def __init__(self, parent, rect, max_val=0, min_val=0, style=None, state=ENABLED):
+        Widget.__init__(self, parent, rect, style, state)
+        self._value = 0
+        self._min_value = min_val
+        self._max_value = max_val
+
+    def set_value(self, val):
+        self._value = val
+
+    def set_max_value(self, val):
+        self._max_value = val
+
+    def set_min_value(self, val):
+        self._min_value = val
+
+    def draw(self, screen, position, bg=True):
+        """
+        :param pygame.SurfaceType screen:
+        :param position:
+        :param bg:
+        :return:
+        """
+        if not self.visible:
+            return
+
+        Widget.draw(self, screen, position)
+
+        # Calculate Progress Bar Percentage
+        percentage = 0
+        val_span = self._max_value - self._min_value
+        if val_span <= 0:
+            percentage = 0
+        else:
+            zero_based_value = self._value - self._min_value
+            percentage = min((zero_based_value * (100 / val_span)) / 100, 1)
+
+        fill_rect = Rect(self.x + position[0],
+                         self.y + position[1],
+                         self.width * percentage,
+                         self.height)
+        pygame.draw.rect(screen, self.style[TEXT_COLOR], fill_rect, 0)
+
+        # Border
+        pygame.draw.rect(screen,
+                         self.style[BD_COLOR],
+                         Rect(self.x + position[0], self.y + position[1], self.width, self.height),
+                         1)
+
+
 class Graph(Widget):
     def __init__(self, parent, rect, data=[], data_gap_ms=500, style=None, state=ENABLED):
         Widget.__init__(self, parent, rect, style, state)
