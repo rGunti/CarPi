@@ -99,6 +99,9 @@ class CarPiUIApp(pqApp):
         self._current_artist = None  # type: Text
         self._current_album = None  # type: Text
 
+        # Music Status
+        self._current_song_time = None  # type: Text
+
         # Load Resources
         self._load()
 
@@ -114,7 +117,8 @@ class CarPiUIApp(pqApp):
         music_page = [
             self._current_title,
             self._current_artist,
-            self._current_album
+            self._current_album,
+            self._current_song_time
         ]
         settings_page = []
 
@@ -289,11 +293,19 @@ class CarPiUIApp(pqApp):
                                        TEXT_FONT: (PATH_FONT_DEFAULT, 15)
                                    }).pack()
 
+        # Music Status
+        self._current_song_time = Text(self,
+                                       ((150, 160), (170, 36)),
+                                       '--:--/--:--',
+                                       style={
+                                           TEXT_FONT: (PATH_FONT_7SEGM, 30)
+                                       }).pack()
+
     def main(self):
         """
         Runs at startup
         """
-        self.show_page(CarPiUIApp.PAGE_GPS)
+        self.show_page(CarPiUIApp.PAGE_MUSIC)
         self._fetcher.start()
 
     def update(self):
@@ -435,15 +447,21 @@ class CarPiUIApp(pqApp):
             self._set_current_song_tags(data.get(MpdDataRedisKeys.KEY_SONG_TITLE, None),
                                         data.get(MpdDataRedisKeys.KEY_SONG_ARTIST, None),
                                         data.get(MpdDataRedisKeys.KEY_SONG_ALBUM, None))
+            self._set_current_song_time(data.get(MpdDataRedisKeys.KEY_CURRENT_TIME, '0:0'),
+                                        data.get(MpdDataRedisKeys.KEY_CURRENT_TIME_FORMATTED, '--:--/--:--'))
         else:
             self._set_current_song_tags('[Music Player not running]',
                                         'Check MPD or Daemon',
                                         None)
+            self._set_current_song_time('0:0', '--:--/--:--')
 
     def _set_current_song_tags(self, title, artist, album):
         self._current_title.settext(title if title else '')
         self._current_artist.settext(artist if artist else '')
         self._current_album.settext(album if album else '')
+
+    def _set_current_song_time(self, int_time, format_time):
+        self._current_song_time.settext(format_time)
 
 
 if __name__ == "__main__":
