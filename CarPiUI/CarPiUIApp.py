@@ -31,7 +31,7 @@ from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdC
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
     ProgressBar
 from PygameUtils import load_image
-from RedisUtils import RedisBackgroundFetcher
+from RedisUtils import RedisBackgroundFetcher, send_command_request
 from os import path
 
 PATH_FONT_DEFAULT = path.join('res', 'fonts', 'Vera.ttf')
@@ -105,6 +105,11 @@ class CarPiUIApp(pqApp):
         self._current_song_time = None  # type: Text
         self._current_song_time_bar = None  # type: ProgressBar
 
+        # Music Controls
+        self._next_song_button = None  # type: Button
+        self._prev_song_button = None  # type: Button
+        self._play_song_button = None  # type: Button
+
         # Load Resources
         self._load()
 
@@ -122,7 +127,10 @@ class CarPiUIApp(pqApp):
             self._current_artist,
             self._current_album,
             self._current_song_time,
-            self._current_song_time_bar
+            self._current_song_time_bar,
+            self._next_song_button,
+            self._prev_song_button,
+            self._play_song_button
         ]
         settings_page = []
 
@@ -145,6 +153,7 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
             GpsRedisKeys.KEY_SPEED_KMH,
+            MpdDataRedisKeys.KEY_STATE,
 
             # Specific Keys
             GpsRedisKeys.KEY_EPX,
@@ -164,6 +173,7 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
             GpsRedisKeys.KEY_SPEED_KMH,
+            MpdDataRedisKeys.KEY_STATE,
 
             # Specific Keys
             MpdDataRedisKeys.KEY_SONG_TITLE,
@@ -186,6 +196,7 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
             GpsRedisKeys.KEY_SPEED_KMH,
+            MpdDataRedisKeys.KEY_STATE,
 
             # Specific Keys
         ]
@@ -307,6 +318,27 @@ class CarPiUIApp(pqApp):
         self._current_song_time_bar = ProgressBar(self,
                                                   ((5, 190), (310, 5))).pack()
 
+        # Music Controls
+        music_control_style = {
+            TEXT_FONT: (PATH_FONT_DEFAULT, 25),
+            TEXT_COLOR: (200, 200, 200)
+        }
+        self._prev_song_button = Button(self,
+                                        ((5, 100), (98, 45)),
+                                        '<<',
+                                        command=self._prev_song_button_command,
+                                        style=music_control_style).pack()
+        self._play_song_button = Button(self,
+                                        ((107, 100), (106, 45)),
+                                        '> / ||',
+                                        command=self._play_song_button_command,
+                                        style=music_control_style).pack()
+        self._next_song_button = Button(self,
+                                        ((217, 100), (98, 45)),
+                                        '>>',
+                                        command=self._next_song_button_command,
+                                        style=music_control_style).pack()
+
     def main(self):
         """
         Runs at startup
@@ -323,7 +355,7 @@ class CarPiUIApp(pqApp):
         new_data = self._fetcher.get_current_data()
         self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
         self._set_networking_data(new_data)  # Networking is kept alive all the time
-        self._set_current_song_info(new_data)
+        self._set_music_player_info(new_data)
 
     def shutdown(self):
         try:
@@ -362,6 +394,18 @@ class CarPiUIApp(pqApp):
         self._settings_tab_button.setstate(0)
 
         self.show_page(CarPiUIApp.PAGE_SETTINGS)
+
+    def _prev_song_button_command(self, e):
+        send_command_request(self._redis,
+                             MpdCommandRedisKeys.COMMAND_PREV)
+
+    def _play_song_button_command(self, e):
+        send_command_request(self._redis,
+                             MpdCommandRedisKeys.COMMAND_PAUSE)
+
+    def _next_song_button_command(self, e):
+        send_command_request(self._redis,
+                             MpdCommandRedisKeys.COMMAND_NEXT)
 
     def _set_speed_metrical(self, data):
         """
@@ -443,12 +487,10 @@ class CarPiUIApp(pqApp):
             image = IMG_WIFI3
         wlan_status_image.setimage(self.get_image(image))
 
-    def _set_current_song_info(self, data):
+    def _set_music_player_info(self, data):
         """
         :param dict data:
         """
-        if self._current_page != CarPiUIApp.PAGE_MUSIC:
-            return
         if data.get(MpdDataRedisKeys.KEY_ALIVE, None):
             self._set_current_song_tags(data.get(MpdDataRedisKeys.KEY_SONG_TITLE, None),
                                         data.get(MpdDataRedisKeys.KEY_SONG_ARTIST, None),
@@ -461,6 +503,8 @@ class CarPiUIApp(pqApp):
                                         None)
             self._set_current_song_time('0:0', '--:--/--:--')
 
+        self._set_player_status(data.get(MpdDataRedisKeys.KEY_STATE, None))
+
     def _set_current_song_tags(self, title, artist, album):
         self._current_title.settext(title if title else '')
         self._current_artist.settext(artist if artist else '')
@@ -472,6 +516,14 @@ class CarPiUIApp(pqApp):
         cur_time, max_time = get_mpd_status_time(num_time)
         self._current_song_time_bar.set_max_value(max_time)
         self._current_song_time_bar.set_value(cur_time)
+
+    def _set_player_status(self, state):
+        play_button_icon = ''
+        if state and state == 'play':
+            play_button_icon = '||'
+        else:
+            play_button_icon = '>'
+        self._play_song_button.settext(play_button_icon)
 
 
 if __name__ == "__main__":

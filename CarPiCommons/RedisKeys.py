@@ -125,6 +125,8 @@ class MpdCommandRedisKeys:
     COMMAND_PLAY = 'CommandRequest(MPD.Play)'
     COMMAND_PAUSE = 'CommandRequest(MPD.Pause)'
     COMMAND_STOP = 'CommandRequest(MPD.Stop)'
+    COMMAND_NEXT = 'CommandRequest(MPD.Next)'
+    COMMAND_PREV = 'CommandRequest(MPD.Prev)'
 
     # Parameters
     # COMMAND_PAUSE
@@ -133,7 +135,9 @@ class MpdCommandRedisKeys:
     COMMANDS = [
         COMMAND_PLAY,
         COMMAND_PAUSE,
-        COMMAND_STOP
+        COMMAND_STOP,
+        COMMAND_NEXT,
+        COMMAND_PREV
     ]
     PARAMS = {
         # COMMAND_PLAY: [],

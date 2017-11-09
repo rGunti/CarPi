@@ -106,8 +106,14 @@ class MpdControlThread(CarPiControlThread):
         return {
             MpdCommandRedisKeys.COMMAND_PLAY: self._execute_play,
             MpdCommandRedisKeys.COMMAND_PAUSE: self._execute_pause,
-            MpdCommandRedisKeys.COMMAND_STOP: self._execute_stop
+            MpdCommandRedisKeys.COMMAND_STOP: self._execute_stop,
+            MpdCommandRedisKeys.COMMAND_PREV: self._execute_prev,
+            MpdCommandRedisKeys.COMMAND_NEXT: self._execute_next
         }
+
+    def _do(self):
+        self._mpd.ping()
+        CarPiControlThread._do(self)
 
     def _execute_play(self):
         self._mpd.play()
@@ -116,11 +122,26 @@ class MpdControlThread(CarPiControlThread):
         """
         :param dict of str, str params:
         """
-        param_pause = params.get(MpdCommandRedisKeys.PARAM_PAUSE_VALUE, '1')
-        self._mpd.pause(int(param_pause) if param_pause else 1)
+        param_pause = params.get(MpdCommandRedisKeys.PARAM_PAUSE_VALUE, None)
+        if param_pause:
+            self._mpd.pause(int(param_pause))
+        else:
+            state = self._mpd.status().get('state', 'none')
+            if state == 'play':
+                self._mpd.pause(1)
+            elif state == 'pause':
+                self._mpd.pause(0)
+            else:
+                self._execute_play()
 
     def _execute_stop(self):
         self._mpd.stop()
+
+    def _execute_prev(self):
+        self._mpd.previous()
+
+    def _execute_next(self):
+        self._mpd.next()
 
 
 def delete_alive_key(r):
@@ -157,6 +178,8 @@ if __name__ == "__main__":
     try:
         log("MPD Data & Control Daemon is running ...")
         while True:
+            if not MPD_DATA_THREAD.isAlive() or not MPD_CONTROL.isAlive():
+                raise ConnectionError()
             current_data = MPD_DATA_THREAD.get_current_data()
             if current_data:
                 set_piped(R, current_data)
