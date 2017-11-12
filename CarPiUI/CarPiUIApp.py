@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from math import isnan
 from redis import Redis
 from time import strftime
 
@@ -343,7 +344,7 @@ class CarPiUIApp(pqApp):
         """
         Runs at startup
         """
-        self.show_page(CarPiUIApp.PAGE_MUSIC)
+        self.show_page(CarPiUIApp.PAGE_GPS)
         self._fetcher.start()
 
     def update(self):
@@ -424,6 +425,8 @@ class CarPiUIApp(pqApp):
         """
         :param float speed:
         """
+        if isnan(speed):
+            speed = 0
         self._speed_label.settext('{:>3.0f}'.format(speed))
         self._speed_graph.add_data_point(speed)
 

@@ -26,7 +26,7 @@ import datetime
 import pygame
 from pygame.locals import *
 from threading import Timer
-from math import pi as PI, ceil
+from math import pi as PI, ceil, isnan
 
 VERSION = (0, 0, 2)
 LONG_VERSION = 'v%s.%s.%s' % VERSION
@@ -1077,6 +1077,9 @@ class Graph(Widget):
         if self._last_added \
                 and (datetime.datetime.now() - self._last_added).microseconds < self._data_gap_ms * 1000:
             return
+
+        if isnan(val):
+            val = 0
 
         self._data.append(val)
         self._data = self._data[-self.get_max_data_points():]
