@@ -31,13 +31,10 @@ from redis import exceptions as redis_exceptions
 from sys import exit
 from os import path
 from time import sleep
-from socket import socket, AF_INET, SOCK_DGRAM
-from array import array
-from struct import pack, unpack
-from fcntl import ioctl
 from subprocess import Popen, PIPE
 from datetime import datetime
 import pytz
+import netifaces
 
 APP_NAME = path.basename(__file__)
 
@@ -53,39 +50,21 @@ class NetDataPoller(CarPiThread):
         # Get Interfaces and IP addresses
         ifaces = NetDataPoller._get_all_interfaces()
         for iface in ifaces:
-            new_data[iface[0]] = NetDataPoller._format_ip(iface[1])
+            try:
+                ip_info = netifaces.ifaddresses(iface)
+                new_data[iface] = ip_info[netifaces.AF_INET][0]['addr']
+            except ValueError:
+                # Interface missing
+                pass
+            except KeyError:
+                # Interface not connected
+                pass
 
         self._data = new_data
 
     @staticmethod
     def _get_all_interfaces():
-        max_pos = 128
-        max_bytes = max_pos * 128
-
-        s = socket(AF_INET, SOCK_DGRAM)
-        names = array('B', '\0' * max_bytes)
-
-        outbytes = unpack('iL', ioctl(
-            s.fileno(),
-            0x8912,
-            pack('iL', max_bytes, names.buffer_info()[0])
-        ))[0]
-        namestr = names.tostring()
-
-        lst = []
-        for i in range(0, outbytes, 40):
-            name = namestr[i:i+16].split('\0', 1)[0]
-            ip = namestr[i + 20:i + 24]
-            lst.append((name, ip))
-
-        return lst
-
-    @staticmethod
-    def _format_ip(addr):
-        return str(ord(addr[0])) + '.' + \
-               str(ord(addr[1])) + '.' + \
-               str(ord(addr[2])) + '.' + \
-               str(ord(addr[3]))
+        return netifaces.interfaces()
 
     def get_current_data(self):
         return self._data
