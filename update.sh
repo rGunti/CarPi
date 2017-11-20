@@ -32,11 +32,11 @@ echo "[*] Updating installation ..."
 git pull
 
 echo "[*] Making Scripts executable ..."
-chmod +x "$SCRIPT_LOCATION/*.sh"
-chmod +x "$SCRIPT_LOCATION/CarPiDaemons/*.sh"
-chmod +x "$SCRIPT_LOCATION/CarPiUI/*.sh"
-chmod +x "$SCRIPT_LOCATION/installer/daemons/*.sh"
-chmod +x "$SCRIPT_LOCATION/installer/ui/*.sh"
+chmod +x $SCRIPT_LOCATION/*.sh
+chmod +x $SCRIPT_LOCATION/CarPiDaemons/*.sh
+chmod +x $SCRIPT_LOCATION/CarPiUI/*.sh
+chmod +x $SCRIPT_LOCATION/installer/daemons/*.sh
+chmod +x $SCRIPT_LOCATION/installer/ui/*.sh
 
 echo "[O] Update has been completed. Rerun any installer scripts to update"
 echo "    your components"
