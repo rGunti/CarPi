@@ -27,6 +27,7 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
+from CarPiSettingsWindow import CarPiSettingsWindow
 from CarPiUtils import get_mpd_status_time
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
@@ -378,23 +379,17 @@ class CarPiUIApp(pqApp):
     def _gps_tab_button_command(self, e):
         self._gps_tab_button.setstate(0)
         self._music_tab_button.setstate(1)
-        self._settings_tab_button.setstate(1)
 
         self.show_page(CarPiUIApp.PAGE_GPS)
 
     def _clock_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
         self._music_tab_button.setstate(0)
-        self._settings_tab_button.setstate(1)
 
         self.show_page(CarPiUIApp.PAGE_MUSIC)
 
     def _settings_tab_button_command(self, e):
-        self._gps_tab_button.setstate(1)
-        self._music_tab_button.setstate(1)
-        self._settings_tab_button.setstate(0)
-
-        self.show_page(CarPiUIApp.PAGE_SETTINGS)
+        CarPiSettingsWindow(self).show()
 
     def _prev_song_button_command(self, e):
         send_command_request(self._redis,
