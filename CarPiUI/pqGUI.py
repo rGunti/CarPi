@@ -1649,6 +1649,7 @@ class Window(Container):
             restrict_text(title, self.style, self.size, color=self.style[TEXT_TITLE], offsets=(restrict, 4)), None]
 
     def draw(self, screen, position):
+        self.update()
         Widget.draw(self, screen, position)
         container = pygame.Surface(self.size)
         container.fill(self.style[BG_COLOR])

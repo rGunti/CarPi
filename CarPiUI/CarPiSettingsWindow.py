@@ -80,7 +80,7 @@ class CarPiSettingsWindow(Window):
         self._wifi1_ip = Text(parent, ((100, 54), (200, 20)), '-').pack()
 
     def update(self):
-        if (datetime.now() - self._last_updated).seconds > 2:
+        if (datetime.now() - self._last_updated).seconds > 1:
             new_data = self._fetcher.get_current_data()
             self._ethernet_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_ETH0_IP, '-'))
             self._wifi0_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_WLAN0_IP, '-'))
