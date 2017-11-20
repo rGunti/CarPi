@@ -53,8 +53,10 @@ class CarPiSettingsWindow(Window):
             NetworkInfoRedisKeys.KEY_ETH0_IP,
             NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN0_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN0_IP,
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
-            NetworkInfoRedisKeys.KEY_WLAN1_SSID
+            NetworkInfoRedisKeys.KEY_WLAN1_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN1_IP
         ])
         self._fetcher.start()
 
