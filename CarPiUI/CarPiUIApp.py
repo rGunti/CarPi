@@ -347,7 +347,7 @@ class CarPiUIApp(pqApp):
         """
         self.show_page(CarPiUIApp.PAGE_GPS)
         self._fetcher.start()
-        self._settings_tab_button_command(None)
+        # self._settings_tab_button_command(None)
 
     def update(self):
         """
