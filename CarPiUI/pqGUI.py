@@ -1707,6 +1707,9 @@ class Window(Container):
     def close(self, event=None):
         self.destroy()
 
+    def update(self):
+        pass
+
     def process_event(self, event, mouseover=[]):
         if event.type in [KEYDOWN, KEYUP]:
             if self.active:
@@ -1847,9 +1850,6 @@ class pqApp(Window):
                 self.queue = []
             self.clock.tick(30)
         self.close()
-
-    def update(self):
-        pass
 
     def draw(self, screen, position):
         self.screen.fill(self.style[BG_COLOR])

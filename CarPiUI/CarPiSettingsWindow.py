@@ -22,31 +22,69 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from datetime import datetime
 
-from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT
+from RedisKeys import NetworkInfoRedisKeys
+from RedisUtils import RedisBackgroundFetcher
+from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT, Text, Box, BD_COLOR
 
 
 class CarPiSettingsWindow(Window):
-    def __init__(self, parent, icon=None):
+    def __init__(self, parent, redis, icon=None):
         Window.__init__(self,
                         parent,
                         ((0, 19), (320, 220)),
                         'Settings',
                         icon=icon,
-                        style={ BG_COLOR: (100, 100, 100) },
+                        style={BG_COLOR: (100, 100, 100)},
                         buttons=DECO_CLOSE,
                         modal=True)
 
         self._scrollbar = Scrollbar(self,
-                                    ((304, 0), (16, 220)),
+                                    ((304, -2), (16, 222)),
                                     style={BG_LIGHT: (25, 25, 25)},
                                     direction=VERTICAL).pack()
         self._container = Container(self,
-                                    ((0, 0), (304, 220)),
+                                    ((0, 0), (303, 220)),
                                     yscroll=self._scrollbar).pack()
-        Widget(self._container,
-               ((50, 50), (260, 260)),
-               {BG_COLOR: (150, 150, 150)}).pack()
+
+        self._fetcher = RedisBackgroundFetcher(redis, [
+            NetworkInfoRedisKeys.KEY_ETH0_IP,
+            NetworkInfoRedisKeys.KEY_WLAN0_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN0_SSID,
+            NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
+            NetworkInfoRedisKeys.KEY_WLAN1_SSID
+        ])
+
+        self._last_updated = datetime.now()
+
+        self._ethernet_ip = None  # type: Text
+        self._wifi0_ip = None  # type: Text
+        self._wifi1_ip = None  # type: Text
+
+        self._init_controls()
+
+    def _init_controls(self):
+        parent = self._container
+        Text(parent, ((5, 5), (294, 20)), 'Networking Status').pack()
+        Box(parent, ((5, 20), (294, 0)), style={BD_COLOR: (100, 100, 100)}).pack()
+
+        Text(parent, ((15, 24), (284, 20)), 'Ethernet:').pack()
+        Text(parent, ((15, 39), (284, 20)), 'WiFi Hotspot:').pack()
+        Text(parent, ((15, 54), (284, 20)), 'WiFi External:').pack()
+
+        self._ethernet_ip = Text(parent, ((100, 24), (200, 20)), '-').pack()
+        self._wifi0_ip = Text(parent, ((100, 39), (200, 20)), '-').pack()
+        self._wifi1_ip = Text(parent, ((100, 54), (200, 20)), '-').pack()
+
+    def update(self):
+        if (datetime.now() - self._last_updated).seconds > 2:
+            new_data = self._fetcher.get_current_data()
+            self._ethernet_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_ETH0_IP, '-'))
+            self._wifi0_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_WLAN0_IP, '-'))
+            self._wifi1_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_WLAN1_IP, '-'))
+
+            self._last_updated = datetime.now()
 
 
 if __name__ == "__main__":

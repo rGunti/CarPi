@@ -347,6 +347,7 @@ class CarPiUIApp(pqApp):
         """
         self.show_page(CarPiUIApp.PAGE_GPS)
         self._fetcher.start()
+        self._settings_tab_button_command(None)
 
     def update(self):
         """
@@ -389,7 +390,7 @@ class CarPiUIApp(pqApp):
         self.show_page(CarPiUIApp.PAGE_MUSIC)
 
     def _settings_tab_button_command(self, e):
-        CarPiSettingsWindow(self).show()
+        CarPiSettingsWindow(self, self._redis).show()
 
     def _prev_song_button_command(self, e):
         send_command_request(self._redis,
