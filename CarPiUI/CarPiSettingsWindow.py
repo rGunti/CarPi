@@ -55,12 +55,13 @@ class CarPiSettingsWindow(Window):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID
         ])
-
-        self._last_updated = datetime.now()
+        self._fetcher.start()
 
         self._ethernet_ip = None  # type: Text
         self._wifi0_ip = None  # type: Text
         self._wifi1_ip = None  # type: Text
+
+        self._last_updated = datetime.now()
 
         self._init_controls()
 
@@ -85,6 +86,10 @@ class CarPiSettingsWindow(Window):
             self._wifi1_ip.settext(new_data.get(NetworkInfoRedisKeys.KEY_WLAN1_IP, '-'))
 
             self._last_updated = datetime.now()
+
+    def destroy(self):
+        self._fetcher.stop_safe(5)
+        super(CarPiSettingsWindow, self).destroy()
 
 
 if __name__ == "__main__":
