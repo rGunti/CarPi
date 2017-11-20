@@ -38,7 +38,8 @@ class CarPiSettingsWindow(Window):
                         icon=icon,
                         style={BG_COLOR: (100, 100, 100)},
                         buttons=DECO_CLOSE,
-                        modal=True)
+                        modal=False)
+        self.restrict_position = True
 
         self._scrollbar = Scrollbar(self,
                                     ((304, -2), (16, 222)),
