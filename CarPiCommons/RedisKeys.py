@@ -69,6 +69,18 @@ class GpsRedisKeys:
     ]
 
 
+class PersistentGpsRedisKeys:
+    KEY_ODO = 'GPS.ODO'
+    KEY_TRIP_A = 'GPS.Trip.A'
+    KEY_TRIP_B = 'GPS.Trip.B'
+
+    KEYS = [
+        KEY_ODO,
+        KEY_TRIP_A,
+        KEY_TRIP_B
+    ]
+
+
 class NetworkInfoRedisKeys:
     KEY_ETH0_IP = 'Net.eth0.IP'  # type: str
     KEY_WLAN0_IP = 'Net.wlan0.IP'  # type: str

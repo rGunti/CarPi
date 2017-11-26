@@ -28,7 +28,7 @@ from CarPiConfig import init_config_env
 from CarPiUIApp import CarPiUIApp
 from PygameUtils import init_io, init_pygame, \
     UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_WIDTH, UI_CONFIG_KEY_RES_HEIGHT, UI_CONFIG_KEY_FULLSCREEN
-from RedisUtils import get_redis
+from RedisUtils import get_redis, get_persistent_redis
 from os import path
 from sys import exit
 
@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
         log("Initializing Data Source ...")
         R = get_redis(CONFIG)
+        RP = get_persistent_redis(CONFIG)
 
         log("Configuring UI ...")
         init_io(CONFIG)
@@ -52,6 +53,7 @@ if __name__ == "__main__":
         APP = CarPiUIApp(rect=(CONFIG.getint(UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_WIDTH),
                                CONFIG.getint(UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_HEIGHT) - 21),
                          redis=R,
+                         pers_redis=RP,
                          title='CarPi',
                          fullscreen=CONFIG.getboolean(UI_CONFIG_SECTION, UI_CONFIG_KEY_FULLSCREEN))
         APP.run()

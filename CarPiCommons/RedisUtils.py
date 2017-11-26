@@ -32,6 +32,7 @@ from time import sleep
 
 # Config Sections and Keys
 RCONFIG_SECTION = 'Redis'
+RCONFIG_PERSISTENT_SECTION = 'Persistent_Redis'
 RCONFIG_KEY_HOST = 'host'
 RCONFIG_KEY_PORT = 'port'
 RCONFIG_KEY_DB = 'db'
@@ -41,8 +42,21 @@ RCONFIG_VALUE_EXPIRE = None
 RCONFIG_VALUE_EXPIRE_COMMANDS = 5
 
 
+def _get_redis(config, section):
+    """
+    :param ConfigParser config:
+    :param str section:
+    :return Redis:
+    """
+    return Redis(host=config.get(section, RCONFIG_KEY_HOST),
+                 port=config.getint(section, RCONFIG_KEY_PORT),
+                 db=config.get(section, RCONFIG_KEY_DB),
+                 socket_connect_timeout=5)
+
+
 def get_redis(config):
     """
+    Returns the default Redis connection
     :param ConfigParser config:
     :return Redis:
     """
@@ -57,10 +71,16 @@ def get_redis(config):
         log("The provided default Expire value is invalid! No expiration will be set.")
         RCONFIG_VALUE_EXPIRE = None
 
-    return Redis(host=config.get(RCONFIG_SECTION, RCONFIG_KEY_HOST),
-                 port=config.getint(RCONFIG_SECTION, RCONFIG_KEY_PORT),
-                 db=config.get(RCONFIG_SECTION, RCONFIG_KEY_DB),
-                 socket_connect_timeout=5)
+    return _get_redis(config, RCONFIG_SECTION)
+
+
+def get_persistent_redis(config):
+    """
+    Returns the Persistent Redis Connection
+    :param ConfigParser config:
+    :return Redis:
+    """
+    return _get_redis(config, RCONFIG_PERSISTENT_SECTION)
 
 
 def get_piped(r, keys):
@@ -102,6 +122,35 @@ def set_piped(r, data_dict):
             pipe.delete(key)
         else:
             pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
+
+        result_dict[key] = None
+        keys.append(key)
+
+    data = pipe.execute()
+    for i, item in enumerate(data):
+        result_dict[keys[i]] = item
+
+    return result_dict
+
+
+def incr_piped(r, data_dict):
+    """
+    Same as set_piped, but uses INCRBY instead of SET.
+    Increases <key> by <value>.
+    Note that INCRBY does not support expiration so this will
+    not be taken into account
+    :param Redis r:
+    :param dict of (str, object) data_dict:
+    :return dict of (str, str):
+    """
+    keys = []
+    result_dict = {}
+    pipe = r.pipeline()
+    for key, value in data_dict.iteritems():
+        if value is None:
+            pipe.delete(key)
+        else:
+            pipe.incrbyfloat(key, value)
 
         result_dict[key] = None
         keys.append(key)

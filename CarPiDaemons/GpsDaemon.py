@@ -30,9 +30,10 @@ import pytz
 from CarPiLogging import log, boot_print, end_print, get_utc_now, print_unhandled_exception, EXIT_CODES
 from CarPiConfig import init_config_env
 from CarPiThreading import CarPiThread
-from RedisUtils import get_redis, set_piped
-from RedisKeys import GpsRedisKeys
+from RedisUtils import get_redis, set_piped, get_persistent_redis, incr_piped
+from RedisKeys import GpsRedisKeys, PersistentGpsRedisKeys
 from gps import gps, gpsfix, WATCH_ENABLE
+from geopy.distance import vincenty
 from redis import exceptions as redis_exceptions
 from sys import exit
 import os
@@ -105,6 +106,13 @@ class GpsPoint(object):
             GpsRedisKeys.KEY_ALIVE: datetime.now(pytz.utc)
         }
 
+    def get_lat_lon(self):
+        """
+        Returns Latitude and Longitude as a Tuple
+        :return Tuple:
+        """
+        return self._fix.latitude, self._fix.longitude
+
 
 if __name__ == "__main__":
     EXIT_CODE = EXIT_CODES['OK']
@@ -113,6 +121,7 @@ if __name__ == "__main__":
     boot_print(APP_NAME)
 
     CONFIG_DATAPOLLER_INTERVAL = CONFIG.getfloat('DataPoller', 'interval') / 1000
+    CONFIG_RECORD_ODO = CONFIG.getboolean('ODO_Recording', 'enabled')
 
     log("Initializing GPS ...")
     GPS_POLLER = GpsPoller()
@@ -120,12 +129,34 @@ if __name__ == "__main__":
 
     log("Initializing Redis Connection ...")
     R = get_redis(CONFIG)
+    RP = get_persistent_redis(CONFIG)
 
     try:
         log("GPS Daemon is running ...")
+        last_data = None
         while True:
-            data = GPS_POLLER.get_current_gps_data()
-            set_piped(R, data.convert_to_redis())
+            data = GPS_POLLER.get_current_gps_data().convert_to_redis()
+
+            if CONFIG_RECORD_ODO and last_data:
+                # Compare Fix
+                old_fix = last_data.get(GpsRedisKeys.KEY_FIX_MODE, 0)
+                new_fix = data.get(GpsRedisKeys.KEY_FIX_MODE, 0)
+                if old_fix >= new_fix or (old_fix >= 2 and new_fix >= 2):
+                    # Calculate Distance traveled and write to persistence (if > 0m)
+                    old_xy = last_data.get(GpsRedisKeys.KEY_LATITUDE), last_data.get(GpsRedisKeys.KEY_LONGITUDE)
+                    new_xy = data.get(GpsRedisKeys.KEY_LATITUDE), data.get(GpsRedisKeys.KEY_LONGITUDE)
+                    distance_traveled = vincenty(old_xy, new_xy).meters
+                    if distance_traveled > 0:
+                        incr_piped(RP, {
+                            PersistentGpsRedisKeys.KEY_ODO: distance_traveled,
+                            PersistentGpsRedisKeys.KEY_TRIP_A: distance_traveled,
+                            PersistentGpsRedisKeys.KEY_TRIP_B: distance_traveled
+                        })
+                last_data = data
+            else:
+                last_data = data
+
+            set_piped(R, data)
             sleep(CONFIG_DATAPOLLER_INTERVAL)
     except (KeyboardInterrupt, SystemExit):
         log("Shutdown requested!")

@@ -22,14 +22,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-from math import isnan
+from math import isnan, floor
 from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
 from CarPiSettingsWindow import CarPiSettingsWindow
 from CarPiUtils import get_mpd_status_time
-from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys
+from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
     ProgressBar
 from PygameUtils import load_image
@@ -64,6 +64,7 @@ class CarPiUIApp(pqApp):
     def __init__(self,
                  rect,
                  redis,
+                 pers_redis,
                  title='CarPi',
                  fullscreen=False):
         log("Initializing CarPiUIApp ...")
@@ -76,9 +77,12 @@ class CarPiUIApp(pqApp):
         self.image_store = {}
         self._pages = {}
         self._redis_pages = {}
+        self._predis_pages = {}
         self._current_page = None  # type: str
         self._fetcher = None  # type: RedisBackgroundFetcher
+        self._predis_fetcher = None  # type: RedisBackgroundFetcher
         self._redis = redis  # type: Redis
+        self._pers_redis = pers_redis  # type: Redis
 
         # Tabs
         self._gps_tab_button = None  # type: Button
@@ -213,6 +217,11 @@ class CarPiUIApp(pqApp):
         self._redis_pages[CarPiUIApp.PAGE_MUSIC] = music_r_page
         self._redis_pages[CarPiUIApp.PAGE_SETTINGS] = settings_r_page
 
+        # Define Persistent Redis Pages
+        self._predis_pages[CarPiUIApp.PAGE_GPS] = PersistentGpsRedisKeys.KEYS
+        self._predis_pages[CarPiUIApp.PAGE_MUSIC] = []
+        self._predis_pages[CarPiUIApp.PAGE_SETTINGS] = []
+
     def _load(self):
         self.load_image(IMG_ETHERNET_OFF)
         self.load_image(IMG_ETHERNET)
@@ -223,6 +232,7 @@ class CarPiUIApp(pqApp):
         self.load_image(IMG_WIFI3)
 
         self._fetcher = RedisBackgroundFetcher(self._redis, [])
+        self._predis_fetcher = RedisBackgroundFetcher(self._pers_redis, [])
 
     def load_image(self, image_path):
         if image_path not in self.image_store:
@@ -375,6 +385,7 @@ class CarPiUIApp(pqApp):
         """
         self.show_page(CarPiUIApp.PAGE_GPS)
         self._fetcher.start()
+        self._predis_fetcher.start()
         # self._settings_tab_button_command(None)
 
     def update(self):
@@ -384,17 +395,28 @@ class CarPiUIApp(pqApp):
         self._time_label.settext(strftime('%H:%M'))  # Time is the most important thing!
 
         new_data = self._fetcher.get_current_data()
+        new_pers_data = self._predis_fetcher.get_current_data()
+
         self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
         self._set_networking_data(new_data)  # Networking is kept alive all the time
         self._set_music_player_info(new_data)
 
+        self._set_trip_odo(new_pers_data)
+
     def shutdown(self):
         try:
+            if self.active_window:
+                try:
+                    self.active_window.destroy()
+                finally:
+                    pass
+
             self._fetcher.stop_safe()
+            self._predis_fetcher.stop_safe()
             log("Shutting down CarPiUIApp ...")
             self.destroy()
         finally:
-            pass
+            return
 
     def show_page(self, page_name):
         for name, page in self._pages.iteritems():
@@ -403,6 +425,7 @@ class CarPiUIApp(pqApp):
                     control.setvisible(name == page_name)
 
         self._fetcher.keys_to_fetch = self._redis_pages[page_name]
+        self._predis_fetcher.keys_to_fetch = self._predis_pages[page_name]
         self._current_page = page_name
 
     def _gps_tab_button_command(self, e):
@@ -551,6 +574,34 @@ class CarPiUIApp(pqApp):
         else:
             play_button_icon = '>'
         self._play_song_button.settext(play_button_icon)
+
+    def _set_trip_odo(self, data):
+        """
+        :param dict data:
+        """
+        trip_a_str = data.get(PersistentGpsRedisKeys.KEY_TRIP_A, -1)
+        try:
+            self._set_trip(float(trip_a_str))
+        except TypeError:
+            self._set_trip(float(-1))
+
+        odo_str = data.get(PersistentGpsRedisKeys.KEY_ODO, -1)
+        try:
+            self._set_odo(float(odo_str))
+        except TypeError:
+            self._set_odo(float(-1))
+
+    def _set_trip(self, value):
+        if isnan(value) or value < 0:
+            self._trip_meter.settext('----.-')
+        else:
+            self._trip_meter.settext('{:>6.1f}'.format(floor(value / 100) / 10))
+
+    def _set_odo(self, value):
+        if isnan(value) or value < 0:
+            self._odo_meter.settext('------')
+        else:
+            self._odo_meter.settext('{:>6.0f}'.format(floor(value / 1000)))
 
 
 if __name__ == "__main__":
