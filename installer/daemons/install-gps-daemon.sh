@@ -101,6 +101,9 @@ if [ ! -d "$INSTALL_DESTINATION" ]; then
     mkdir -p "$INSTALL_DESTINATION"
 fi
 
+echo "[*] Installing Python Dependencies ..."
+pip install geopy
+
 echo "[*] Installing CarPi Commons ..."
 copyFile "$INSTALL_DESTINATION" "$DIR_COMMONS/CarPiConfig.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_COMMONS/CarPiLogging.py"
