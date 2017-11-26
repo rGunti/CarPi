@@ -118,6 +118,9 @@ copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiUIApp.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiSettingsWindow.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/carpi-ui.sh"
 
+echo "[*] Installing Resources ..."
+copyFile "$INSTALL_DESTINATION" "$DIR_UI/res"
+
 echo "[*] Preparing Files ..."
 chmod +x "$DIR_UI/carpi-ui.sh"
 
