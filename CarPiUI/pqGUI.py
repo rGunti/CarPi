@@ -1088,9 +1088,9 @@ class Graph(Widget):
     def get_max_data_points(self):
         return self.width - 2
 
-    def prefill_data(self):
+    def prefill_data(self, default_value=0):
         for i in range(0, self.get_max_data_points()):
-            self._data.append(0)
+            self._data.append(default_value)
 
     @staticmethod
     def round_up_to_10(v):

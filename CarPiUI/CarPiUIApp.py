@@ -39,6 +39,7 @@ from os import path
 PATH_FONT_DEFAULT = path.join('res', 'fonts', 'Vera.ttf')
 PATH_FONT_7SEGM = path.join('res', 'fonts', 'DigitalCounter7.ttf')
 PATH_FONT_DOTMATRIX = path.join('res', 'fonts', 'scoreboard.ttf')
+PATH_FONT_VCR = path.join('res', 'fonts', 'VCR_OSD_MONO.ttf')
 
 STYLE_TAB_BUTTON = {
     TEXT_COLOR: (128, 128, 128),
@@ -91,6 +92,11 @@ class CarPiUIApp(pqApp):
 
         self._gps_status_icon = None  # type: Image
         self._car_status_icon = None  # type: Image
+
+        # Trip Data
+        self._trip_meter = None  # type: Text
+        self._odo_meter = None  # type: Text
+        self._trip_odo_unit = None  # type: Text
 
         # Status Bar
         self._ethernet_status_icon = None  # type: Image
@@ -234,24 +240,46 @@ class CarPiUIApp(pqApp):
     def _init_controls(self):
         # GPS Data
         self._speed_label = Text(self,
-                                 ((70, 10), (260, 195)),
+                                 ((5, -5), (260, 195)),
                                  '---',
                                  style={
                                      TEXT_FONT: (PATH_FONT_7SEGM, 150)
                                  }).pack()
         self._speed_unit = Text(self,
-                                ((230, 150), (260, 195)),
+                                ((255, 5), (260, 195)),
                                 'km/h',
                                 style={
-                                    TEXT_FONT: (PATH_FONT_DOTMATRIX, 40)
+                                    TEXT_FONT: (PATH_FONT_VCR, 20)
                                 }).pack()
         self._speed_graph = Graph(self,
-                                  ((5, 150), (215, 50)),
+                                  ((5, 130), (200, 70)),
                                   data_gap_ms=500,
                                   style={
                                       TEXT_COLOR: (150, 150, 150)
                                   }).pack()
         self._speed_graph.prefill_data()
+
+        # Trip Data
+        self._trip_meter = Text(self,
+                                ((227, 130), (94, 33)),
+                                '----.-',
+                                style={
+                                    TEXT_FONT: (PATH_FONT_7SEGM, 30)
+                                }).pack()
+
+        self._odo_meter = Text(self,
+                               ((215, 175), (106, 33)),
+                               '------',
+                               style={
+                                   TEXT_FONT: (PATH_FONT_7SEGM, 30)
+                               }).pack()
+
+        self._trip_odo_unit = Text(self,
+                                   ((297, 158), (28, 19)),
+                                   'km',
+                                   style={
+                                       TEXT_FONT: (PATH_FONT_VCR, 15)
+                                   }).pack()
 
         # Tab Button
         self._gps_tab_button = Button(self,
@@ -284,10 +312,10 @@ class CarPiUIApp(pqApp):
 
         # Time Label
         self._time_label = Text(self,
-                                ((263, 212), (95, 34)),
+                                ((260, 212), (95, 34)),
                                 '--:--',
                                 style={
-                                    TEXT_FONT: (PATH_FONT_DOTMATRIX, 20)
+                                    TEXT_FONT: (PATH_FONT_VCR, 20)
                                 }).pack()
 
         # Music Display
