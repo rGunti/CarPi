@@ -29,6 +29,14 @@ function copyFile {
     cp -f "$SOURCE" "$DESTINATION"
 }
 
+function copyDir {
+    DESTINATION=$1
+    SOURCE=$2
+
+    echo "    Copying $(basename "$SOURCE") ..."
+    cp -rf "$SOURCE" "$DESTINATION"
+}
+
 SCRIPT_LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 INSTALL_SOURCE="$SCRIPT_LOCATION/../../"
@@ -119,7 +127,7 @@ copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiSettingsWindow.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/carpi-ui.sh"
 
 echo "[*] Installing Resources ..."
-copyFile "$INSTALL_DESTINATION" "$DIR_UI/res"
+copyDir "$INSTALL_DESTINATION/res" "$DIR_UI/res"
 
 echo "[*] Preparing Files ..."
 chmod +x "$DIR_UI/carpi-ui.sh"
