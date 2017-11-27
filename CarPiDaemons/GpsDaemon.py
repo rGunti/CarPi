@@ -33,6 +33,7 @@ from CarPiThreading import CarPiThread
 from RedisUtils import get_redis, set_piped, get_persistent_redis, incr_piped
 from RedisKeys import GpsRedisKeys, PersistentGpsRedisKeys
 from gps import gps, gpsfix, WATCH_ENABLE
+from math import isnan
 from geopy.distance import vincenty
 from redis import exceptions as redis_exceptions
 from sys import exit
@@ -145,13 +146,16 @@ if __name__ == "__main__":
                     # Calculate Distance traveled and write to persistence (if > 0m)
                     old_xy = last_data.get(GpsRedisKeys.KEY_LATITUDE), last_data.get(GpsRedisKeys.KEY_LONGITUDE)
                     new_xy = data.get(GpsRedisKeys.KEY_LATITUDE), data.get(GpsRedisKeys.KEY_LONGITUDE)
-                    distance_traveled = vincenty(old_xy, new_xy).meters
-                    if distance_traveled > 0:
-                        incr_piped(RP, {
-                            PersistentGpsRedisKeys.KEY_ODO: distance_traveled,
-                            PersistentGpsRedisKeys.KEY_TRIP_A: distance_traveled,
-                            PersistentGpsRedisKeys.KEY_TRIP_B: distance_traveled
-                        })
+                    if isnan(old_xy[0]) or isnan(new_xy[0]):
+                        pass
+                    else:
+                        distance_traveled = vincenty(old_xy, new_xy).meters
+                        if distance_traveled > 0:
+                            incr_piped(RP, {
+                                PersistentGpsRedisKeys.KEY_ODO: distance_traveled,
+                                PersistentGpsRedisKeys.KEY_TRIP_A: distance_traveled,
+                                PersistentGpsRedisKeys.KEY_TRIP_B: distance_traveled
+                            })
                 last_data = data
             else:
                 last_data = data
