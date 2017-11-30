@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from datetime import datetime
+from os import system
 
 from RedisKeys import NetworkInfoRedisKeys
 from RedisUtils import RedisBackgroundFetcher
@@ -145,10 +146,10 @@ class CarPiPowerSettingsWindow(Window):
         super(CarPiPowerSettingsWindow, self).destroy()
 
     def _power_off_button_command(self, e):
-        pass
+        system('shutdown -P now')
 
     def _reboot_button_command(self, e):
-        pass
+        system('shutdown -r now')
 
     def _back_button_command(self, e):
         self.destroy()
