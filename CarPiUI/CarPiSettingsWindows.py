@@ -26,7 +26,8 @@ from datetime import datetime
 
 from RedisKeys import NetworkInfoRedisKeys
 from RedisUtils import RedisBackgroundFetcher
-from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT, Text, Box, BD_COLOR
+from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT, Text, Box, BD_COLOR, \
+    Button
 
 
 class CarPiNetworkSettingsWindow(Window):
@@ -115,16 +116,42 @@ class CarPiPowerSettingsWindow(Window):
                                     ((0, 0), (303, 220)),
                                     yscroll=self._scrollbar).pack()
 
-        self._init_controls()
+        self._back_button = None  # type: Button
 
-    def _init_controls(self):
-        pass
+        self._power_off_button = None  # type: Button
+        self._reboot_button = None  # type: Button
+
+        self._init_controls(self._container)
+
+    def _init_controls(self, parent):
+        self._power_off_button = Button(parent,
+                                        ((5, 5), (293, 32)),
+                                       'Power Off',
+                                        command=self._power_off_button_command).pack()
+        self._reboot_button = Button(parent,
+                                     ((5, 45), (293, 32)),
+                                     'Reboot',
+                                     command=self._reboot_button_command).pack()
+
+        self._back_button = Button(parent,
+                                   ((5, 183), (146, 32)),
+                                   ' < Back ',
+                                   command=self._back_button_command).pack()
 
     def update(self):
         pass
 
     def destroy(self):
         super(CarPiPowerSettingsWindow, self).destroy()
+
+    def _power_off_button_command(self, e):
+        pass
+
+    def _reboot_button_command(self, e):
+        pass
+
+    def _back_button_command(self, e):
+        self.destroy()
 
 
 if __name__ == "__main__":
