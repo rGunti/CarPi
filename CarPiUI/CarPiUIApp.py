@@ -27,7 +27,7 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
-from CarPiSettingsWindows import CarPiNetworkSettingsWindow, CarPiPowerSettingsWindow
+from CarPiSettingsWindows import CarPiNetworkSettingsWindow, CarPiPowerSettingsWindow, CarPiSettingsWindow
 from CarPiUtils import get_mpd_status_time
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
@@ -123,12 +123,6 @@ class CarPiUIApp(pqApp):
         self._prev_song_button = None  # type: Button
         self._play_song_button = None  # type: Button
 
-        # Settings Categories
-        self._network_settings_button = None  # type: Button
-        self._gps_settings_button = None  # type: Button
-        self._music_settings_button = None  # type: Button
-        self._power_settings_button = None  # type: Button
-
         # Load Resources
         self._load()
 
@@ -154,12 +148,7 @@ class CarPiUIApp(pqApp):
             self._prev_song_button,
             self._play_song_button
         ]
-        settings_page = [
-            self._network_settings_button,
-            self._gps_settings_button,
-            self._music_settings_button,
-            self._power_settings_button
-        ]
+        settings_page = []
 
         self._pages[CarPiUIApp.PAGE_GPS] = gps_page
         self._pages[CarPiUIApp.PAGE_MUSIC] = music_page
@@ -394,36 +383,6 @@ class CarPiUIApp(pqApp):
                                         command=self._next_song_button_command,
                                         style=music_control_style).pack()
 
-        # Settings Categories
-        self._network_settings_button = Button(self,
-                                               ((5, 5), (152, 95)),
-                                               'Network',
-                                               command=self._network_settings_button_command,
-                                               style={
-                                                   TEXT_FONT: (PATH_FONT_DEFAULT, 20)
-                                               }).pack()
-        self._gps_settings_button = Button(self,
-                                           ((163, 5), (152, 95)),
-                                           'GPS',
-                                           command=self._gps_settings_button_command,
-                                           style={
-                                               TEXT_FONT: (PATH_FONT_DEFAULT, 20)
-                                           }).pack()
-        self._music_settings_button = Button(self,
-                                             ((5, 105), (152, 95)),
-                                             'Music',
-                                             command=self._music_settings_button_command,
-                                             style={
-                                                 TEXT_FONT: (PATH_FONT_DEFAULT, 20)
-                                             }).pack()
-        self._power_settings_button = Button(self,
-                                             ((163, 105), (152, 95)),
-                                             'Power',
-                                             command=self._power_settings_button_command,
-                                             style={
-                                                 TEXT_FONT: (PATH_FONT_DEFAULT, 20)
-                                             }).pack()
-
     def main(self):
         """
         Runs at startup
@@ -488,11 +447,11 @@ class CarPiUIApp(pqApp):
         self.show_page(CarPiUIApp.PAGE_MUSIC)
 
     def _settings_tab_button_command(self, e):
-        self._gps_tab_button.setstate(1)
-        self._music_tab_button.setstate(1)
-        self._settings_tab_button.setstate(0)
-
-        self.show_page(CarPiUIApp.PAGE_SETTINGS)
+        # self._gps_tab_button.setstate(1)
+        # self._music_tab_button.setstate(1)
+        # self._settings_tab_button.setstate(0)
+        # self.show_page(CarPiUIApp.PAGE_SETTINGS)
+        CarPiSettingsWindow(self, self._redis).show()
 
     def _prev_song_button_command(self, e):
         send_command_request(self._redis,

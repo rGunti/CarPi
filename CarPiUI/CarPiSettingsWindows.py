@@ -28,7 +28,86 @@ from os import system
 from RedisKeys import NetworkInfoRedisKeys
 from RedisUtils import RedisBackgroundFetcher
 from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT, Text, Box, BD_COLOR, \
-    Button
+    Button, TEXT_FONT, DEFAULT_STYLE
+
+
+class CarPiSettingsWindow(Window):
+    def __init__(self, parent, redis, icon=None):
+        Window.__init__(self,
+                        parent,
+                        ((0, 21), (320, 220)),
+                        'Settings',
+                        icon=icon,
+                        buttons=DECO_CLOSE,
+                        modal=False)
+        self.restrict_position = True
+
+        self._redis = redis
+
+        self._back_button = None  # type: Button
+        self._network_settings_button = None  # type: Button
+        self._gps_settings_button = None  # type: Button
+        self._music_settings_button = None  # type: Button
+        self._power_settings_button = None  # type: Button
+
+        self._init_controls(self)
+
+    def _init_controls(self, parent):
+        self._back_button = Button(parent,
+                                   ((5, 183), (146, 32)),
+                                   ' < Back ',
+                                   command=self._back_button_command).pack()
+
+        # Settings Categories
+        self._network_settings_button = Button(self,
+                                               ((5, 5), (310, 35)),
+                                               'Network',
+                                               command=self._network_settings_button_command,
+                                               style={
+                                                   TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)
+                                               }).pack()
+        self._gps_settings_button = Button(self,
+                                           ((5, 45), (310, 35)),
+                                           'GPS',
+                                           command=self._gps_settings_button_command,
+                                           style={
+                                               TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)
+                                           }).pack()
+        self._music_settings_button = Button(self,
+                                             ((5, 85), (310, 35)),
+                                             'Music',
+                                             command=self._music_settings_button_command,
+                                             style={
+                                                 TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)
+                                             }).pack()
+        self._power_settings_button = Button(self,
+                                             ((5, 125), (310, 35)),
+                                             'Power',
+                                             command=self._power_settings_button_command,
+                                             style={
+                                                 TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)
+                                             }).pack()
+
+    def update(self):
+        pass
+
+    def destroy(self):
+        super(CarPiSettingsWindow, self).destroy()
+
+    def _back_button_command(self, e):
+        self.destroy()
+
+    def _network_settings_button_command(self, e):
+        CarPiNetworkSettingsWindow(self, self._redis).show()
+
+    def _gps_settings_button_command(self, e):
+        pass
+
+    def _music_settings_button_command(self, e):
+        pass
+
+    def _power_settings_button_command(self, e):
+        CarPiPowerSettingsWindow(self).show()
 
 
 class CarPiNetworkSettingsWindow(Window):
