@@ -123,6 +123,12 @@ class CarPiUIApp(pqApp):
         self._prev_song_button = None  # type: Button
         self._play_song_button = None  # type: Button
 
+        # Settings Categories
+        self._network_settings_button = None  # type: Button
+        self._gps_settings_button = None  # type: Button
+        self._music_settings_button = None  # type: Button
+        self._power_settings_button = None  # type: Button
+
         # Load Resources
         self._load()
 
@@ -148,7 +154,12 @@ class CarPiUIApp(pqApp):
             self._prev_song_button,
             self._play_song_button
         ]
-        settings_page = []
+        settings_page = [
+            self._network_settings_button,
+            self._gps_settings_button,
+            self._music_settings_button,
+            self._power_settings_button
+        ]
 
         self._pages[CarPiUIApp.PAGE_GPS] = gps_page
         self._pages[CarPiUIApp.PAGE_MUSIC] = music_page
@@ -383,6 +394,36 @@ class CarPiUIApp(pqApp):
                                         command=self._next_song_button_command,
                                         style=music_control_style).pack()
 
+        # Settings Categories
+        self._network_settings_button = Button(self,
+                                               ((5, 5), (152, 95)),
+                                               'Network',
+                                               command=self._network_settings_button_command,
+                                               style={
+                                                   TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                               }).pack()
+        self._gps_settings_button = Button(self,
+                                           ((163, 5), (152, 95)),
+                                           'GPS',
+                                           command=self._gps_settings_button_command,
+                                           style={
+                                               TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                           }).pack()
+        self._music_settings_button = Button(self,
+                                             ((5, 105), (152, 95)),
+                                             'Music',
+                                             command=self._music_settings_button_command,
+                                             style={
+                                                 TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                             }).pack()
+        self._power_settings_button = Button(self,
+                                             ((163, 105), (152, 95)),
+                                             'Power',
+                                             command=self._power_settings_button_command,
+                                             style={
+                                                 TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                             }).pack()
+
     def main(self):
         """
         Runs at startup
@@ -612,6 +653,18 @@ class CarPiUIApp(pqApp):
             self._odo_meter.settext('------')
         else:
             self._odo_meter.settext('{:>6.0f}'.format(floor(value / 1000)))
+
+    def _network_settings_button_command(self, e):
+        pass
+
+    def _gps_settings_button_command(self, e):
+        pass
+
+    def _music_settings_button_command(self, e):
+        pass
+
+    def _power_settings_button_command(self, e):
+        pass
 
 
 if __name__ == "__main__":
