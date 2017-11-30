@@ -132,7 +132,10 @@ class CarPiUIApp(pqApp):
         gps_page = [
             self._speed_label,
             self._speed_graph,
-            self._speed_unit
+            self._speed_unit,
+            self._odo_meter,
+            self._trip_meter,
+            self._trip_odo_unit
         ]
         music_page = [
             self._current_title,
