@@ -29,12 +29,12 @@ from RedisUtils import RedisBackgroundFetcher
 from pqGUI import Window, DECO_CLOSE, Scrollbar, VERTICAL, BG_COLOR, Container, Widget, BG_LIGHT, Text, Box, BD_COLOR
 
 
-class CarPiSettingsWindow(Window):
+class CarPiNetworkSettingsWindow(Window):
     def __init__(self, parent, redis, icon=None):
         Window.__init__(self,
                         parent,
-                        ((0, 19), (320, 220)),
-                        'Settings',
+                        ((0, 21), (320, 220)),
+                        'Network Settings',
                         icon=icon,
                         style={BG_COLOR: (100, 100, 100)},
                         buttons=DECO_CLOSE,
@@ -92,7 +92,39 @@ class CarPiSettingsWindow(Window):
 
     def destroy(self):
         self._fetcher.stop_safe(5)
-        super(CarPiSettingsWindow, self).destroy()
+        super(CarPiNetworkSettingsWindow, self).destroy()
+
+
+class CarPiPowerSettingsWindow(Window):
+    def __init__(self, parent, icon=None):
+        Window.__init__(self,
+                        parent,
+                        ((0, 21), (320, 220)),
+                        'Power Settings',
+                        icon=icon,
+                        style={BG_COLOR: (100, 100, 100)},
+                        buttons=DECO_CLOSE,
+                        modal=False)
+        self.restrict_position = True
+
+        self._scrollbar = Scrollbar(self,
+                                    ((304, -2), (16, 222)),
+                                    style={BG_LIGHT: (25, 25, 25)},
+                                    direction=VERTICAL).pack()
+        self._container = Container(self,
+                                    ((0, 0), (303, 220)),
+                                    yscroll=self._scrollbar).pack()
+
+        self._init_controls()
+
+    def _init_controls(self):
+        pass
+
+    def update(self):
+        pass
+
+    def destroy(self):
+        super(CarPiPowerSettingsWindow, self).destroy()
 
 
 if __name__ == "__main__":

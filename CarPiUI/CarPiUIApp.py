@@ -27,7 +27,7 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
-from CarPiSettingsWindow import CarPiSettingsWindow
+from CarPiSettingsWindows import CarPiNetworkSettingsWindow, CarPiPowerSettingsWindow
 from CarPiUtils import get_mpd_status_time
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
@@ -655,7 +655,7 @@ class CarPiUIApp(pqApp):
             self._odo_meter.settext('{:>6.0f}'.format(floor(value / 1000)))
 
     def _network_settings_button_command(self, e):
-        pass
+        CarPiNetworkSettingsWindow(self, self._redis).show()
 
     def _gps_settings_button_command(self, e):
         pass
@@ -664,7 +664,7 @@ class CarPiUIApp(pqApp):
         pass
 
     def _power_settings_button_command(self, e):
-        pass
+        CarPiPowerSettingsWindow(self).show()
 
 
 if __name__ == "__main__":
