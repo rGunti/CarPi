@@ -36,10 +36,11 @@ from PygameUtils import load_image
 from RedisUtils import RedisBackgroundFetcher, send_command_request
 from os import path
 
-PATH_FONT_DEFAULT = path.join('res', 'fonts', 'Vera.ttf')
+PATH_FONT_DEFAULT = path.join('res', 'fonts', 'NoraSansDisplay', 'Regular.ttf')
 PATH_FONT_7SEGM = path.join('res', 'fonts', 'DigitalCounter7.ttf')
 PATH_FONT_DOTMATRIX = path.join('res', 'fonts', 'scoreboard.ttf')
 PATH_FONT_VCR = path.join('res', 'fonts', 'VCR_OSD_MONO.ttf')
+PATH_FONT_NORA_MEDIUM = path.join('res', 'fonts', 'NoraSansDisplay', 'Medium.ttf')
 
 STYLE_TAB_BUTTON = {
     TEXT_COLOR: (128, 128, 128),
@@ -336,27 +337,27 @@ class CarPiUIApp(pqApp):
                                    ((5, 5), (310, 30)),
                                    '{Title}',
                                    style={
-                                       TEXT_FONT: (PATH_FONT_DEFAULT, 20)
+                                       TEXT_FONT: (PATH_FONT_NORA_MEDIUM, 18)
                                    }).pack()
         self._current_artist = Text(self,
                                     ((5, 40), (310, 30)),
                                     '{Artist}',
                                     style={
-                                        TEXT_FONT: (PATH_FONT_DEFAULT, 15)
+                                        TEXT_FONT: (PATH_FONT_NORA_MEDIUM, 15)
                                     }).pack()
         self._current_album = Text(self,
                                    ((5, 60), (310, 30)),
                                    '{Album}',
                                    style={
-                                       TEXT_FONT: (PATH_FONT_DEFAULT, 15)
+                                       TEXT_FONT: (PATH_FONT_NORA_MEDIUM, 15)
                                    }).pack()
 
         # Music Status
         self._current_song_time = Text(self,
-                                       ((154, 160), (170, 36)),
+                                       ((5, 160), (170, 36)),
                                        '--:--/--:--',
                                        style={
-                                           TEXT_FONT: (PATH_FONT_7SEGM, 30)
+                                           TEXT_FONT: (PATH_FONT_VCR, 20)
                                        }).pack()
         self._current_song_time_bar = ProgressBar(self,
                                                   ((5, 190), (310, 5))).pack()
@@ -434,17 +435,23 @@ class CarPiUIApp(pqApp):
     def _gps_tab_button_command(self, e):
         self._gps_tab_button.setstate(0)
         self._music_tab_button.setstate(1)
+        self._settings_tab_button.setstate(1)
 
         self.show_page(CarPiUIApp.PAGE_GPS)
 
     def _clock_tab_button_command(self, e):
         self._gps_tab_button.setstate(1)
         self._music_tab_button.setstate(0)
+        self._settings_tab_button.setstate(1)
 
         self.show_page(CarPiUIApp.PAGE_MUSIC)
 
     def _settings_tab_button_command(self, e):
-        CarPiSettingsWindow(self, self._redis).show()
+        self._gps_tab_button.setstate(1)
+        self._music_tab_button.setstate(1)
+        self._settings_tab_button.setstate(0)
+
+        self.show_page(CarPiUIApp.PAGE_SETTINGS)
 
     def _prev_song_button_command(self, e):
         send_command_request(self._redis,
@@ -545,9 +552,9 @@ class CarPiUIApp(pqApp):
         :param dict data:
         """
         if data.get(MpdDataRedisKeys.KEY_ALIVE, None):
-            self._set_current_song_tags(data.get(MpdDataRedisKeys.KEY_SONG_TITLE, None),
-                                        data.get(MpdDataRedisKeys.KEY_SONG_ARTIST, None),
-                                        data.get(MpdDataRedisKeys.KEY_SONG_ALBUM, None))
+            self._set_current_song_tags(unicode(data.get(MpdDataRedisKeys.KEY_SONG_TITLE, ''), 'utf-8'),
+                                        unicode(data.get(MpdDataRedisKeys.KEY_SONG_ARTIST, ''), 'utf-8'),
+                                        unicode(data.get(MpdDataRedisKeys.KEY_SONG_ALBUM, ''), 'utf-8'))
             self._set_current_song_time(data.get(MpdDataRedisKeys.KEY_CURRENT_TIME, '0:0'),
                                         data.get(MpdDataRedisKeys.KEY_CURRENT_TIME_FORMATTED, '--:--/--:--'))
         else:

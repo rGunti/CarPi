@@ -83,7 +83,7 @@ import os
 DEFAULT_STYLE = {
     TEXT_FONT_TYPE: FILEFONT,
     #TEXT_FONT: ('Roboto', 11),
-    TEXT_FONT: (os.path.join('res', 'fonts', 'Vera.ttf'), 11),
+    TEXT_FONT: (os.path.join('res', 'fonts', 'NoraSansDisplay', 'Medium.ttf'), 11),
 # Note that in DEFAULT_STYLE the TEXT_FONT setting is a sequence yet in a pqStyle instance it is a pygame.font.Font instance (can be passed as a sequence still)
     TEXT_ANTI_ALIAS: True,
     TEXT_COLOR: (255, 255, 255),
