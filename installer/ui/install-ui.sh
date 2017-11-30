@@ -109,12 +109,12 @@ if [ ! -d "$INSTALL_DESTINATION" ]; then
     mkdir -p "$INSTALL_DESTINATION"
 fi
 
-echo "[*] Installing CarPi Commons ..."
-copyFile "$INSTALL_DESTINATION" "$DIR_COMMONS/CarPiConfig.py"
-
 echo "[*] Installing Python Dependencies ..."
 pip install pygame
 pip install numpy
+
+echo "[*] Installing CarPi Commons ..."
+copyFile "$INSTALL_DESTINATION" "$DIR_COMMONS/CarPiConfig.py"
 
 echo "[*] Installing UI Dependencies ..."
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/pqGUI.py"
@@ -123,11 +123,11 @@ copyFile "$INSTALL_DESTINATION" "$DIR_UI/PygameUtils.py"
 echo "[*] Installing UI App ..."
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiUI.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiUIApp.py"
-copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiSettingsWindow.py"
+copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiSettingsWindows.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/carpi-ui.sh"
 
 echo "[*] Installing Resources ..."
-copyDir "$INSTALL_DESTINATION/res" "$DIR_UI/res"
+copyDir "$INSTALL_DESTINATION" "$DIR_UI/res"
 
 echo "[*] Preparing Files ..."
 chmod +x "$DIR_UI/carpi-ui.sh"
