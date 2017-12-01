@@ -27,20 +27,15 @@ from redis import Redis
 from time import strftime
 
 from CarPiLogging import log
-from CarPiSettingsWindows import CarPiNetworkSettingsWindow, CarPiPowerSettingsWindow, CarPiSettingsWindow
+from CarPiSettingsWindows import MainSettingsWindow
 from CarPiUtils import get_mpd_status_time
+from CarPiStyles import PATH_FONT_7SEGM, PATH_FONT_VCR, PATH_FONT_NORA_MEDIUM, PATH_FONT_DEFAULT
 from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
     ProgressBar
 from PygameUtils import load_image
 from RedisUtils import RedisBackgroundFetcher, send_command_request
 from os import path
-
-PATH_FONT_DEFAULT = path.join('res', 'fonts', 'NoraSansDisplay', 'Regular.ttf')
-PATH_FONT_7SEGM = path.join('res', 'fonts', 'DigitalCounter7.ttf')
-PATH_FONT_DOTMATRIX = path.join('res', 'fonts', 'scoreboard.ttf')
-PATH_FONT_VCR = path.join('res', 'fonts', 'VCR_OSD_MONO.ttf')
-PATH_FONT_NORA_MEDIUM = path.join('res', 'fonts', 'NoraSansDisplay', 'Medium.ttf')
 
 STYLE_TAB_BUTTON = {
     TEXT_COLOR: (128, 128, 128),
@@ -451,7 +446,7 @@ class CarPiUIApp(pqApp):
         # self._music_tab_button.setstate(1)
         # self._settings_tab_button.setstate(0)
         # self.show_page(CarPiUIApp.PAGE_SETTINGS)
-        CarPiSettingsWindow(self, self._redis).show()
+        MainSettingsWindow(self, self._redis, self._pers_redis).show()
 
     def _prev_song_button_command(self, e):
         send_command_request(self._redis,
