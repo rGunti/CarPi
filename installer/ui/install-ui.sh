@@ -124,6 +124,7 @@ echo "[*] Installing UI App ..."
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiUI.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiUIApp.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiSettingsWindows.py"
+copyFile "$INSTALL_DESTINATION" "$DIR_UI/CarPiStyles.py"
 copyFile "$INSTALL_DESTINATION" "$DIR_UI/carpi-ui.sh"
 
 echo "[*] Installing Resources ..."
