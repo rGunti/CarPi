@@ -1910,7 +1910,9 @@ class pqApp(Window):
             widget.window.active = widget
 
     def process_event(self, event, mouseover=[]):
-        if event.type in [KEYDOWN, KEYUP] and self.active_window:
+        # There have been cases where self.active_window was actually set to the own pqApp instance which caused
+        # infinite recursion
+        if event.type in [KEYDOWN, KEYUP] and self.active_window and self.active_window != self:
             self.active_window.process_event(event)
             return
         elif event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN, MOUSEDOUBLECLICK]:
