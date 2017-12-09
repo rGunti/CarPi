@@ -102,7 +102,7 @@ if [ ! -d "$INSTALL_DESTINATION" ]; then
 fi
 
 echo "[*] Installing Python Dependencies ..."
-pip install geopy
+pip install geopy reverse_geocoder
 
 echo "[*] Installing CarPi Commons ..."
 copyFile "$INSTALL_DESTINATION" "$DIR_COMMONS/CarPiConfig.py"

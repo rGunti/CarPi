@@ -89,6 +89,7 @@ class CarPiUIApp(pqApp):
         self._speed_label = None  # type: Text
         self._speed_unit = None  # type: Text
         self._speed_graph = None  # type: Graph
+        self._location_label = None  # type: Text
 
         self._gps_status_icon = None  # type: Image
         self._car_status_icon = None  # type: Image
@@ -131,7 +132,8 @@ class CarPiUIApp(pqApp):
             self._speed_unit,
             self._odo_meter,
             self._trip_meter,
-            self._trip_odo_unit
+            self._trip_odo_unit,
+            self._location_label
         ]
         music_page = [
             self._current_title,
@@ -168,7 +170,9 @@ class CarPiUIApp(pqApp):
 
             # Specific Keys
             GpsRedisKeys.KEY_EPX,
-            GpsRedisKeys.KEY_EPY
+            GpsRedisKeys.KEY_EPY,
+            GpsRedisKeys.KEY_LOCATION_COUNTRY,
+            GpsRedisKeys.KEY_LOCATION_CITY
         ]
         music_r_page = [
             # Alive Keys
@@ -261,12 +265,19 @@ class CarPiUIApp(pqApp):
                                     TEXT_FONT: (PATH_FONT_VCR, 20)
                                 }).pack()
         self._speed_graph = Graph(self,
-                                  ((5, 130), (200, 70)),
+                                  ((5, 130), (200, 52)),
                                   data_gap_ms=500,
                                   style={
                                       TEXT_COLOR: (150, 150, 150)
                                   }).pack()
         self._speed_graph.prefill_data()
+
+        self._location_label = Text(self,
+                                    ((5, 182), (200, 26)),
+                                    '---',
+                                    style={
+                                        TEXT_FONT: (PATH_FONT_NORA_MEDIUM, 15)
+                                    }).pack()
 
         # Trip Data
         self._trip_meter = Text(self,
@@ -472,6 +483,14 @@ class CarPiUIApp(pqApp):
                 self._set_speed(float(speed_str))
             except TypeError:
                 self._set_speed(speed=float(0))
+
+        if GpsRedisKeys.KEY_LOCATION_CITY in data:
+            self._location_label.settext(
+                '%s: %s' % (data.get(GpsRedisKeys.KEY_LOCATION_COUNTRY, '--'),
+                            data.get(GpsRedisKeys.KEY_LOCATION_CITY, '--'))
+            )
+        else:
+            self._location_label.settext('---')
 
     def _set_speed(self, speed):
         """
