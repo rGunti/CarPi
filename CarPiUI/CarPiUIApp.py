@@ -276,7 +276,7 @@ class CarPiUIApp(pqApp):
                                     ((5, 182), (200, 26)),
                                     '---',
                                     style={
-                                        TEXT_FONT: (PATH_FONT_NORA_MEDIUM, 15)
+                                        TEXT_FONT: (PATH_FONT_VCR, 20)
                                     }).pack()
 
         # Trip Data
@@ -476,30 +476,37 @@ class CarPiUIApp(pqApp):
         :param dict of str, str data:
         """
         if GpsRedisKeys.KEY_SPEED_KMH not in data:
-            self._set_speed(0)
+            self._set_speed(-1)
         else:
             speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
             try:
                 self._set_speed(float(speed_str))
             except TypeError:
-                self._set_speed(speed=float(0))
+                self._set_speed(speed=float(-1))
 
-        if GpsRedisKeys.KEY_LOCATION_CITY in data:
-            self._location_label.settext(
-                '%s: %s' % (data.get(GpsRedisKeys.KEY_LOCATION_COUNTRY, '--'),
-                            data.get(GpsRedisKeys.KEY_LOCATION_CITY, '--'))
-            )
-        else:
-            self._location_label.settext('---')
+        # Disabled because reverse geocoding seems to be incompatible with RPI
+        # if GpsRedisKeys.KEY_LOCATION_CITY in data and data[GpsRedisKeys.KEY_LOCATION_CITY]:
+        #     self._location_label.settext(
+        #         '%s: %s' % (data.get(GpsRedisKeys.KEY_LOCATION_COUNTRY, '--'),
+        #                     data.get(GpsRedisKeys.KEY_LOCATION_CITY, '--'))
+        #     )
+        # else:
+        #     self._location_label.settext('---')
+        self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
+            float(data.get(GpsRedisKeys.KEY_EPX, '0')),
+            float(data.get(GpsRedisKeys.KEY_EPY, '0'))
+        ))
 
     def _set_speed(self, speed):
         """
         :param float speed:
         """
-        if isnan(speed):
-            speed = 0
-        self._speed_label.settext('{:>3.0f}'.format(speed))
-        self._speed_graph.add_data_point(speed)
+        if isnan(speed) or speed < 0:
+            self._speed_label.settext('---')
+            self._speed_graph.add_data_point(0)
+        else:
+            self._speed_label.settext('{:>3.0f}'.format(speed))
+            self._speed_graph.add_data_point(speed)
 
     def _set_networking_data(self, data):
         """
