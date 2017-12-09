@@ -44,6 +44,11 @@ class GpsRedisKeys:
     KEY_SPEED_MPH = 'GPS.Speed.MPH'  # type: str
     KEY_LAST_UPDATED = 'GPS.LastUpdated'  # type: str
 
+    KEY_LOCATION_COUNTRY = 'GPS.Location.Country'  # type: str
+    KEY_LOCATION_CITY = 'GPS.Location.City'  # type: str
+    KEY_LOCATION_ADMIN1 = 'GPS.Location.Admin1'  # type: str
+    KEY_LOCATION_ADMIN2 = 'GPS.Location.Admin2'  # type: str
+
     KEY_ALIVE = 'DaemonAlive.GPS'  # type: str
 
     KEYS = [

@@ -38,6 +38,7 @@ from geopy.distance import vincenty
 from redis import exceptions as redis_exceptions
 from sys import exit
 import os
+import reverse_geocoder as rg
 
 
 APP_NAME = os.path.basename(__file__)
@@ -115,6 +116,25 @@ class GpsPoint(object):
         return self._fix.latitude, self._fix.longitude
 
 
+class GpsLocationPoller(CarPiThread):
+    def __init__(self, gps_poller, redis, interval):
+        CarPiThread.__init__(self, interval)
+        self._gps_poller = gps_poller  # type: GpsPoller
+        self._redis = redis
+
+    def _do(self):
+        search_data = self._gps_poller.get_current_gps_data().get_lat_lon()
+        result = rg.search(search_data)
+        if result and len(result) == 1:
+            # print('%s (%s); %s; %s' % (result[0]['name'], result[0]['cc'], result[0]['admin1'], result[0]['admin2']))
+            set_piped(self._redis, {
+                GpsRedisKeys.KEY_LOCATION_COUNTRY: result[0]['cc'],
+                GpsRedisKeys.KEY_LOCATION_CITY: result[0]['name'],
+                GpsRedisKeys.KEY_LOCATION_ADMIN1: result[0]['admin1'],
+                GpsRedisKeys.KEY_LOCATION_ADMIN2: result[0]['admin2']
+            })
+
+
 if __name__ == "__main__":
     EXIT_CODE = EXIT_CODES['OK']
 
@@ -123,6 +143,7 @@ if __name__ == "__main__":
 
     CONFIG_DATAPOLLER_INTERVAL = CONFIG.getfloat('DataPoller', 'interval') / 1000
     CONFIG_RECORD_ODO = CONFIG.getboolean('ODO_Recording', 'enabled')
+    CONFIG_LOCATION_POLLER_INTERVAL = CONFIG.getfloat('DataPoller', 'location_polling') / 1000
 
     log("Initializing GPS ...")
     GPS_POLLER = GpsPoller()
@@ -131,6 +152,13 @@ if __name__ == "__main__":
     log("Initializing Redis Connection ...")
     R = get_redis(CONFIG)
     RP = get_persistent_redis(CONFIG)
+
+    if CONFIG_LOCATION_POLLER_INTERVAL > 0:
+        log("Initializing GPS Location Poller ...")
+        GPS_LOC = GpsLocationPoller(GPS_POLLER, R, CONFIG_LOCATION_POLLER_INTERVAL)
+        GPS_LOC.start()
+    else:
+        log("GPS Location Poller is disabled. To enable, set [DataPoller].location_polling in config file > 0")
 
     try:
         log("GPS Daemon is running ...")
@@ -171,6 +199,8 @@ if __name__ == "__main__":
         EXIT_CODE = EXIT_CODES['UnhandledException']
         print_unhandled_exception(APP_NAME)
     finally:
+        if not GPS_POLLER.stop_safe() and EXIT_CODE == EXIT_CODES['OK']:
+            EXIT_CODE = EXIT_CODES['BackgroundThreadTimedOut']
         if not GPS_POLLER.stop_safe() and EXIT_CODE == EXIT_CODES['OK']:
             EXIT_CODE = EXIT_CODES['BackgroundThreadTimedOut']
 
