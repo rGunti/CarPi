@@ -58,11 +58,20 @@ class CarPiBaseSettingsWindow(Window):
         for (i, item) in enumerate(items):
             if item is None:
                 continue
-            Button(parent,
-                   ((5 if i % 2 == 0 else 162, 5 + (floor(i / 2) * 40)), (152, 32)),
-                   item[0],
-                   command=item[1],
-                   style={TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)}).pack()
+            pos = ((5 if i % 2 == 0 else 162, 5 + (floor(i / 2) * 40)), (152, 32))
+            if isinstance(item, Button):
+                button = item  # type: Button
+                # button.x = pos[0][0]
+                # button.y = pos[0][1]
+                # button.width = pos[1][0]
+                # button.height = pos[1][1]
+                button.pack()
+            else:
+                Button(parent,
+                       pos,
+                       item[0],
+                       command=item[1],
+                       style={TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)}).pack()
 
     def _back_callback(self, e):
         self.destroy()
@@ -240,9 +249,17 @@ class NetworkSettingsWindow(CarPiBaseSettingsWindow):
 
 class PowerSettingsWindow(CarPiBaseSettingsWindow):
     def __init__(self, parent):
+        self._maint_button = None  # type: Button
+        self._reboot_to_maint = False
         CarPiBaseSettingsWindow.__init__(self, parent, 'Power Settings')
 
     def _init_controls(self):
+        self._maint_button = Button(self,
+                                    # formula from _init_options()
+                                    ((5 if 9 % 2 == 0 else 162, 5 + (floor(9 / 2) * 40)), (152, 32)),
+                                    'Maint. Mode',
+                                    style={TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)},
+                                    command=self._reboot_maint_callback)
         self._init_options(self, [
             None,
             None,
@@ -253,17 +270,24 @@ class PowerSettingsWindow(CarPiBaseSettingsWindow):
             None,
             None,
             ('< Back', self._back_callback),
-            None
+            self._maint_button
         ])
 
     def _shutdown_callback(self, e):
         system('shutdown -P now')
 
     def _reboot_callback(self, e):
+        if self._reboot_to_maint:
+            with open('/boot/start_maint', 'w') as f:
+                f.write('BOOT INTO MAINT MODE')
         system('shutdown -r now')
 
+    def _reboot_maint_callback(self, e):
+        self._reboot_to_maint = not self._reboot_to_maint
+
     def update(self):
-        pass
+        self._maint_button.style[BG_COLOR] = (219, 164, 0) if self._reboot_to_maint \
+            else (0, 0, 0)
 
 
 class OdoCorrectionWindow(CarPiBaseSettingsWindow):
