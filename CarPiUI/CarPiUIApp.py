@@ -492,10 +492,14 @@ class CarPiUIApp(pqApp):
         #     )
         # else:
         #     self._location_label.settext('---')
-        self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
-            float(data.get(GpsRedisKeys.KEY_EPX, '0')),
-            float(data.get(GpsRedisKeys.KEY_EPY, '0'))
-        ))
+        if GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
+                and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
+            self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
+                float(data.get(GpsRedisKeys.KEY_EPX, '0')),
+                float(data.get(GpsRedisKeys.KEY_EPY, '0'))
+            ))
+        else:
+            self._location_label.settext('NO GPS')
 
     def _set_speed(self, speed):
         """
