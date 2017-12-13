@@ -117,7 +117,7 @@ if __name__ == "__main__":
         get_data(t, 'ATZ')          # Reset Everything
         get_data(t, 'ATS0')         # Do not print spaces
         get_data(t, 'AT@1')         # Get Device Description
-        init = get_data(t, '0100')  # Request supported PIDs to establish vehicle connection
+        init = get_data(t, 'ATSI')  # Request supported PIDs to establish vehicle connection
 
         # If BUS INIT failed, cancel here (restart app and try again)
         if 'BUS INIT:' in init and 'ERROR' in init:
