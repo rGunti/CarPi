@@ -179,6 +179,7 @@ def parse_0134_013B(v):
 PARSER_MAP = {
     'ATRV': parse_atrv,
     '0104': parse_0104,
+    '0105': parse_010F,
     '010B': parse_010B,
     '010C': parse_010C,
     '010D': parse_010D,
@@ -196,6 +197,7 @@ PARSER_MAP = {
 OBD_REDIS_MAP = {
     'ATRV': ObdRedisKeys.KEY_BATTERY_VOLTAGE,
     '0104': ObdRedisKeys.KEY_ENGINE_LOAD,
+    '0105': ObdRedisKeys.KEY_COOLANT_TEMP,
     '010B': ObdRedisKeys.KEY_INTAKE_MAP,
     '010C': ObdRedisKeys.KEY_ENGINE_RPM,
     '010D': ObdRedisKeys.KEY_VEHICLE_SPEED,

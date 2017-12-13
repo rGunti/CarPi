@@ -168,6 +168,7 @@ class ObdRedisKeys:
 
     KEY_BATTERY_VOLTAGE = 'OBD.BatteryVoltage'
     KEY_ENGINE_LOAD = 'OBD.EngineLoad'
+    KEY_COOLANT_TEMP = 'OBD.CoolantTemp'
     KEY_INTAKE_MAP = 'OBD.IntakeMAP'
     KEY_ENGINE_RPM = 'OBD.RPM'
     KEY_VEHICLE_SPEED = 'OBD.Speed'

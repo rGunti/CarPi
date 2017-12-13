@@ -30,7 +30,8 @@ from CarPiLogging import log
 from CarPiSettingsWindows import MainSettingsWindow
 from CarPiUtils import get_mpd_status_time
 from CarPiStyles import PATH_FONT_7SEGM, PATH_FONT_VCR, PATH_FONT_NORA_MEDIUM, PATH_FONT_DEFAULT
-from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys
+from RedisKeys import GpsRedisKeys, NetworkInfoRedisKeys, MpdDataRedisKeys, MpdCommandRedisKeys, PersistentGpsRedisKeys, \
+    ObdRedisKeys
 from pqGUI import pqApp, Text, Graph, Image, TEXT_FONT, TEXT_COLOR, Button, TRANS, BG_COLOR, TEXT_DISABLED, Widget, \
     ProgressBar
 from PygameUtils import load_image
@@ -168,11 +169,16 @@ class CarPiUIApp(pqApp):
             GpsRedisKeys.KEY_SPEED_KMH,
             MpdDataRedisKeys.KEY_STATE,
 
+            # OBD & Fuel Consumption
+            ObdRedisKeys.KEY_ALIVE,
+            ObdRedisKeys.KEY_ENGINE_RPM,
+            ObdRedisKeys.KEY_INTAKE_TEMP,
+            ObdRedisKeys.KEY_INTAKE_MAP,
+            ObdRedisKeys.KEY_VEHICLE_SPEED,
+
             # Specific Keys
             GpsRedisKeys.KEY_EPX,
-            GpsRedisKeys.KEY_EPY,
-            GpsRedisKeys.KEY_LOCATION_COUNTRY,
-            GpsRedisKeys.KEY_LOCATION_CITY
+            GpsRedisKeys.KEY_EPY
         ]
         music_r_page = [
             # Alive Keys
@@ -189,6 +195,13 @@ class CarPiUIApp(pqApp):
 
             GpsRedisKeys.KEY_SPEED_KMH,
             MpdDataRedisKeys.KEY_STATE,
+
+            # OBD & Fuel Consumption
+            ObdRedisKeys.KEY_ALIVE,
+            ObdRedisKeys.KEY_ENGINE_RPM,
+            ObdRedisKeys.KEY_INTAKE_TEMP,
+            ObdRedisKeys.KEY_INTAKE_MAP,
+            ObdRedisKeys.KEY_VEHICLE_SPEED,
 
             # Specific Keys
             MpdDataRedisKeys.KEY_SONG_TITLE,
@@ -212,6 +225,13 @@ class CarPiUIApp(pqApp):
 
             GpsRedisKeys.KEY_SPEED_KMH,
             MpdDataRedisKeys.KEY_STATE,
+
+            # OBD & Fuel Consumption
+            ObdRedisKeys.KEY_ALIVE,
+            ObdRedisKeys.KEY_ENGINE_RPM,
+            ObdRedisKeys.KEY_INTAKE_TEMP,
+            ObdRedisKeys.KEY_INTAKE_MAP,
+            ObdRedisKeys.KEY_VEHICLE_SPEED,
 
             # Specific Keys
         ]
@@ -475,14 +495,20 @@ class CarPiUIApp(pqApp):
         """
         :param dict of str, str data:
         """
-        if GpsRedisKeys.KEY_SPEED_KMH not in data:
-            self._set_speed(-1)
-        else:
+        speed_str = ''
+        if GpsRedisKeys.KEY_SPEED_KMH in data:
             speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
-            try:
-                self._set_speed(float(speed_str))
-            except TypeError:
-                self._set_speed(speed=float(-1))
+        elif ObdRedisKeys.KEY_VEHICLE_SPEED in data:
+            speed_str = data[ObdRedisKeys.KEY_VEHICLE_SPEED]
+        else:
+            speed_str = '-1'
+
+        speed = -1
+        try:
+            speed = float(speed_str)
+        except TypeError:
+            speed = -1
+        self._set_speed(speed)
 
         # Disabled because reverse geocoding seems to be incompatible with RPI
         # if GpsRedisKeys.KEY_LOCATION_CITY in data and data[GpsRedisKeys.KEY_LOCATION_CITY]:
@@ -492,7 +518,24 @@ class CarPiUIApp(pqApp):
         #     )
         # else:
         #     self._location_label.settext('---')
-        if GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
+        if ObdRedisKeys.KEY_ALIVE in data \
+                and (ObdRedisKeys.KEY_ENGINE_RPM in data and data[ObdRedisKeys.KEY_ENGINE_RPM]) \
+                and (ObdRedisKeys.KEY_INTAKE_MAP in data and data[ObdRedisKeys.KEY_INTAKE_MAP]) \
+                and (ObdRedisKeys.KEY_INTAKE_TEMP in data and data[ObdRedisKeys.KEY_INTAKE_TEMP]):
+            try:
+                fuel_cons = CarPiUIApp._calc_fuel_consumption(
+                    float(data[ObdRedisKeys.KEY_INTAKE_TEMP]),
+                    float(data[ObdRedisKeys.KEY_ENGINE_RPM]),
+                    float(data[ObdRedisKeys.KEY_INTAKE_MAP]),
+                    speed
+                )
+                if not speed or speed < 10:
+                    self._location_label.settext('{:<10.2f} l/h'.format(fuel_cons[0]))
+                else:
+                    self._location_label.settext('{:<10.2f} l/100km'.format(fuel_cons[1]))
+            except TypeError:
+                self._location_label.settext('{:<10} l/h'.format('--.--'))
+        elif GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
                 and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
             self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
                 float(data.get(GpsRedisKeys.KEY_EPX, '0')),
@@ -649,6 +692,45 @@ class CarPiUIApp(pqApp):
 
     def _power_settings_button_command(self, e):
         CarPiPowerSettingsWindow(self).show()
+
+    @staticmethod
+    def _calc_fuel_consumption(intake_temp,
+                               rpm,
+                               map,
+                               speed=None,
+                               ve=0.85,
+                               vh=1.390,
+                               ma=28.9644,
+                               r=8.3144598,
+                               pf=745):
+        """
+        Calculates Fuel consumption with the given variables and constants.
+        The result is a tuple of ([l/h], [l/100km]).
+        Note that if the speed is not given (None) or <1 km/h, fuel efficiency [l/100km]
+        will be returned as "None".
+        Parameters marked with * are optional
+        :param float intake_temp: Intake Air Temperature in [Degrees Celsius]
+        :param float rpm: Engine RPM in [RPM]
+        :param float map: Intake Manifold Absolute Pressure in [kPa]
+        :param float speed: *Speed in [km/h] (or 0 or None to remove fuel efficiency)
+        :param float ve: *Volumetric Efficiency (defined as a percentage value, 0 - 1 (100%)), default: 85%
+        :param float vh: *Engine Capacity in [l] ([m^3] / 1000), default: 1.39 l
+        :param float ma: *avg. molecular mass of air [g/mol], default 28.9644 g/mol
+        :param float r: *Gas constant, default 8.3144598 J/(mol.K)
+        :param float pf: *Fuel density in [g/l], default 745 g/l (after Super E10, to be adjusted based on fuel type)
+        :return tuple of float, float:
+        """
+        intake_temp_k = intake_temp + 273.15
+        imap = rpm * map / intake_temp_k
+        maf = (imap / 120) * ve * vh * ma / r
+
+        cons_p_s = (maf / 14.7) / pf
+        cons_p_h = cons_p_s * 3600
+
+        if speed and speed >= 1:
+            return cons_p_h, cons_p_h / speed * 100
+        else:
+            return cons_p_h, None
 
 
 if __name__ == "__main__":
