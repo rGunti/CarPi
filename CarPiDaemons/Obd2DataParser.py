@@ -75,13 +75,14 @@ def parse_obj(o):
 
 def transform_obj(o):
     r = {}
-    for k, v in o:
+    for k, v in o.items():
         if v is tuple:
             keys = OBD_REDIS_MAP[k]
             r[keys[0]] = v[0]
             r[keys[1]] = v[1]
         else:
             r[OBD_REDIS_MAP[k]] = v
+    return r
 
 
 def parse_atrv(v):
