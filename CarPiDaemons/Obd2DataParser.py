@@ -87,7 +87,7 @@ def parse_obj(o):
     r = {}
     for k, v in o.items():
         r[k] = parse_value(k, v)
-    return o
+    return r
 
 
 def transform_obj(o):
