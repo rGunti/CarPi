@@ -106,7 +106,7 @@ def parse_0104(v):
         val = int(trim_obd_value(v), 16)
         return val / 2.55
     except ValueError:
-        return int('nan')
+        return float('nan')
 
 
 def parse_010B(v):
@@ -118,7 +118,7 @@ def parse_010B(v):
     try:
         return int(trim_obd_value(v), 16)
     except ValueError:
-        return int('nan')
+        return float('nan')
 
 
 def parse_010C(v):
