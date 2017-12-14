@@ -54,10 +54,13 @@ def prepare_value(v):
     :param str v:
     :return str:
     """
+    log('Preparing value {}'.format(v))
     a = v.split('|')
     if len(a) >= 2 and a[1] != '>':
+        log('Returning {} for {}'.format(a[1], v))
         return a[1]
     else:
+        log('Returning NONE for {}'.format(v))
         return None
 
 
@@ -72,7 +75,10 @@ def parse_value(type, val):
     :return:
     """
     if type in PARSER_MAP:
-        return PARSER_MAP[type](prepare_value(val))
+        prep_val = prepare_value(val)
+        out = PARSER_MAP[type](prep_val)
+        log('For {} entered {}, got {} out'.format(type, prep_val, out))
+        return out
     else:
         raise ObdPidParserUnknownError(type, val)
 

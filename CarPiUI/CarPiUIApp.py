@@ -529,12 +529,16 @@ class CarPiUIApp(pqApp):
                     float(data[ObdRedisKeys.KEY_INTAKE_MAP]),
                     speed
                 )
-                if not speed or speed < 10:
-                    self._location_label.settext('{:<10.2f} l/h'.format(fuel_cons[0]))
+                if fuel_cons[0] and isnan(fuel_cons[0]):
+                    self._location_label.settext('{:>6} l/h'.format('--.--'))
+                elif not speed or speed < 10:  # TODO: Make configurable
+                    self._location_label.settext('{:>6.2f} l/h'.format(fuel_cons[0]))
+                elif fuel_cons[1] is str:
+                    self._location_label.settext('{:>6} l/100km'.format(fuel_cons[1]))
                 else:
-                    self._location_label.settext('{:<10.2f} l/100km'.format(fuel_cons[1]))
+                    self._location_label.settext('{:>6.2f} l/100km'.format(fuel_cons[1]))
             except TypeError:
-                self._location_label.settext('{:<10} l/h'.format('--.--'))
+                self._location_label.settext('{:>10} l/h'.format('--.--'))
         elif GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
                 and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
             self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
