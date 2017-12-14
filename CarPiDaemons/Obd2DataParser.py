@@ -27,9 +27,14 @@ from RedisKeys import ObdRedisKeys
 
 
 class ObdPidParserUnknownError(Exception):
-    def __init__(self, type):
-        log("Unknown or unimplemented OBD PID {}".format(type))
+    def __init__(self, type, val=None):
+        """
+        :param str type: OBD PID
+        :param str val: (optional) value received to parse
+        """
+        log("Unknown or unimplemented OBD PID {} (Value was: {})".format(type, val))
         self.type = type
+        self.val = val
 
 
 def trim_obd_value(v):
@@ -38,10 +43,22 @@ def trim_obd_value(v):
     :param str v:
     :return str:
     """
-    if len(v) > 4:
+    if not v or len(v) < 4:
         return ''
     else:
         return v[4:]
+
+
+def prepare_value(v):
+    """
+    :param str v:
+    :return str:
+    """
+    a = v.split('|')
+    if len(a) >= 2 and a[1] != '>':
+        return a[1]
+    else:
+        return None
 
 
 def parse_value(type, val):
@@ -55,9 +72,9 @@ def parse_value(type, val):
     :return:
     """
     if type in PARSER_MAP:
-        return PARSER_MAP[type](val)
+        return PARSER_MAP[type](prepare_value(val))
     else:
-        raise ObdPidParserUnknownError(type)
+        raise ObdPidParserUnknownError(type, val)
 
 
 def parse_obj(o):
@@ -82,6 +99,7 @@ def transform_obj(o):
             r[keys[1]] = v[1]
         else:
             r[OBD_REDIS_MAP[k]] = v
+    r[ObdRedisKeys.KEY_ALIVE] = 1
     return r
 
 
