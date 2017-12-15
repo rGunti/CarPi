@@ -268,7 +268,7 @@ class PowerSettingsWindow(CarPiBaseSettingsWindow):
             None,
             None,
             None,
-            None,
+            ('Exit', self._exit_callback),
             ('< Back', self._back_callback),
             self._maint_button
         ])
@@ -284,6 +284,9 @@ class PowerSettingsWindow(CarPiBaseSettingsWindow):
 
     def _reboot_maint_callback(self, e):
         self._reboot_to_maint = not self._reboot_to_maint
+
+    def _exit_callback(self, e):
+        raise SystemExit
 
     def update(self):
         self._maint_button.style[BG_COLOR] = (219, 164, 0) if self._reboot_to_maint \
