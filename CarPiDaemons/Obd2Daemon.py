@@ -32,6 +32,7 @@ from CarPiConfig import init_config_env
 from CarPiLogging import EXIT_CODES, boot_print, end_print, print_unhandled_exception, log
 from CarPiThreading import CarPiThread
 from Obd2DataParser import transform_obj, parse_obj
+from RedisKeys import ObdRedisKeys
 from RedisUtils import get_redis, set_piped
 from redis import exceptions as redis_exceptions
 
@@ -135,10 +136,12 @@ if __name__ == "__main__":
             except timeout:
                 log("Connection to OBD Adapter timed out after {} sec, retrying after {} sec".format(
                     CONFIG_OBD_TIMEOUT, CONFIG_OBD_RETRY_TIMEOUT))
+                set_piped(R, {ObdRedisKeys.KEY_ALIVE: 0})
                 sleep(CONFIG_OBD_RETRY_TIMEOUT)
             except ObdEnvConfigError as e:
                 log("Failed to configure environment (Sent={}, Received={})".format(e.sent_cmd,
                                                                                     e.received_response))
+                set_piped(R, {ObdRedisKeys.KEY_ALIVE: 0})
                 sleep(CONFIG_OBD_RETRY_TIMEOUT)
             finally:
                 try:
