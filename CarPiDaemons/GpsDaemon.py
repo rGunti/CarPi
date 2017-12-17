@@ -169,7 +169,8 @@ if __name__ == "__main__":
         while True:
             data = GPS_POLLER.get_current_gps_data().convert_to_redis()
 
-            if CONFIG_RECORD_ODO and last_data:
+            # Disabled in Code because we use the GPS Recorder service for this now
+            if False and CONFIG_RECORD_ODO and last_data:
                 # Compare Fix
                 old_fix = last_data.get(GpsRedisKeys.KEY_FIX_MODE, 0)
                 new_fix = data.get(GpsRedisKeys.KEY_FIX_MODE, 0)
