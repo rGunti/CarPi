@@ -22,8 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import threading
 from math import floor
 from os import system
+from threading import Thread
 
 from CarPiLogging import log
 from CarPiStyles import PATH_FONT_VCR, PATH_FONT_DEFAULT
@@ -274,23 +276,66 @@ class PowerSettingsWindow(CarPiBaseSettingsWindow):
         ])
 
     def _shutdown_callback(self, e):
-        system('shutdown -P now')
+        PowerSettingsRunningWindow(self,
+                                   'Shutting down...',
+                                   'Please wait a moment...',
+                                   threading.Timer(3, self.on_shutdown)).show()
 
     def _reboot_callback(self, e):
-        if self._reboot_to_maint:
-            with open('/boot/start_maint', 'w') as f:
-                f.write('BOOT INTO MAINT MODE')
-        system('shutdown -r now')
+        PowerSettingsRunningWindow(self,
+                                   'Rebooting...',
+                                   'Please wait a moment...',
+                                   threading.Timer(3, self.on_reboot)).show()
 
     def _reboot_maint_callback(self, e):
         self._reboot_to_maint = not self._reboot_to_maint
 
     def _exit_callback(self, e):
-        raise SystemExit
+        self.on_exit()
+        #PowerSettingsRunningWindow(self,
+        #                           'Exiting...',
+        #                           'Please wait a moment...',
+        #                           threading.Timer(3, self.on_exit)).show()
+
+    def on_shutdown(self):
+        system('shutdown -P now')
+
+    def on_reboot(self):
+        if self._reboot_to_maint:
+            with open('/boot/start_maint', 'w') as f:
+                f.write('BOOT INTO MAINT MODE')
+        system('shutdown -r now')
+
+    def on_exit(self):
+        exit(0)
+        raise KeyboardInterrupt
 
     def update(self):
         self._maint_button.style[BG_COLOR] = (219, 164, 0) if self._reboot_to_maint \
             else (0, 0, 0)
+
+
+class PowerSettingsRunningWindow(CarPiBaseSettingsWindow):
+    def __init__(self, parent, title, message, timer_object):
+        """
+        :param parent:
+        :param title:
+        :param message:
+        :param threading.Timer timer_object:
+        """
+        self._thread = timer_object
+        timer_object.start()
+        CarPiBaseSettingsWindow.__init__(self, parent, title)
+        self._processing_text = Text(self,
+                                     ((10, 75), (300, 75)),
+                                     message,
+                                     style={TEXT_FONT: (DEFAULT_STYLE[TEXT_FONT][0], 20)}).pack()
+
+    def _init_controls(self):
+        pass
+
+    def update(self):
+        pass
 
 
 class OdoCorrectionWindow(CarPiBaseSettingsWindow):
