@@ -521,7 +521,9 @@ class CarPiUIApp(pqApp):
                     float(data[ObdRedisKeys.KEY_INTAKE_MAP]),
                     speed
                 )
-                if not speed or speed < 20:
+                if fuel_cons[0] and isnan(fuel_cons[0]):
+                    self._set_fuel_consumption(None)
+                elif not speed or speed < 20:
                     self._set_fuel_consumption(fuel_cons[0])
                 else:
                     self._set_fuel_consumption(fuel_cons[1], True)
@@ -537,7 +539,7 @@ class CarPiUIApp(pqApp):
             self._location_label.settext('NO GPS')
 
     def _set_fuel_consumption(self, val, in_lp100k=False):
-        if not val:
+        if not val or val is str:
             self._location_label.settext('{:<6} l/h'.format('--.--'))
         elif in_lp100k:
             self._location_label.settext('{:<6.2f} l/100km'.format(val))

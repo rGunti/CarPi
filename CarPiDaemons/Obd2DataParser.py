@@ -27,9 +27,14 @@ from RedisKeys import ObdRedisKeys
 
 
 class ObdPidParserUnknownError(Exception):
-    def __init__(self, type):
-        log("Unknown or unimplemented OBD PID {}".format(type))
+    def __init__(self, type, val=None):
+        """
+        :param str type: OBD PID
+        :param str val: (optional) value received to parse
+        """
+        log("Unknown or unimplemented OBD PID {} (Value was: {})".format(type, val))
         self.type = type
+        self.val = val
 
 
 def trim_obd_value(v):
@@ -38,10 +43,25 @@ def trim_obd_value(v):
     :param str v:
     :return str:
     """
-    if len(v) > 4:
+    if not v or len(v) < 4:
         return ''
     else:
         return v[4:]
+
+
+def prepare_value(v):
+    """
+    :param str v:
+    :return str:
+    """
+    log('Preparing value {}'.format(v))
+    a = v.split('|')
+    if len(a) >= 2 and a[1] != '>':
+        log('Returning {} for {}'.format(a[1], v))
+        return a[1]
+    else:
+        log('Returning NONE for {}'.format(v))
+        return None
 
 
 def parse_value(type, val):
@@ -55,9 +75,12 @@ def parse_value(type, val):
     :return:
     """
     if type in PARSER_MAP:
-        return PARSER_MAP[type](val)
+        prep_val = prepare_value(val)
+        out = PARSER_MAP[type](prep_val)
+        log('For {} entered {}, got {} out'.format(type, prep_val, out))
+        return out
     else:
-        raise ObdPidParserUnknownError(type)
+        raise ObdPidParserUnknownError(type, val)
 
 
 def parse_obj(o):
@@ -70,18 +93,20 @@ def parse_obj(o):
     r = {}
     for k, v in o.items():
         r[k] = parse_value(k, v)
-    return o
+    return r
 
 
 def transform_obj(o):
     r = {}
-    for k, v in o:
+    for k, v in o.items():
         if v is tuple:
             keys = OBD_REDIS_MAP[k]
             r[keys[0]] = v[0]
             r[keys[1]] = v[1]
         else:
             r[OBD_REDIS_MAP[k]] = v
+    r[ObdRedisKeys.KEY_ALIVE] = 1
+    return r
 
 
 def parse_atrv(v):
@@ -106,7 +131,7 @@ def parse_0104(v):
         val = int(trim_obd_value(v), 16)
         return val / 2.55
     except ValueError:
-        return int('nan')
+        return float('nan')
 
 
 def parse_010B(v):
@@ -118,7 +143,7 @@ def parse_010B(v):
     try:
         return int(trim_obd_value(v), 16)
     except ValueError:
-        return int('nan')
+        return float('nan')
 
 
 def parse_010C(v):
