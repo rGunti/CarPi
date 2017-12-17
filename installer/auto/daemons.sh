@@ -84,7 +84,7 @@ CONFIG_FILES=(
 
 # ## Step 1: Install Dependencies
 setStatus "Step 1: Installing dependencies..." 0
-pip install geopy
+pip install geopy >> "/var/log/carpi/install.daemons.log"
 
 # ## Step 2: Installing Resources
 setStatus "Step 2: Installing resources..." 0
