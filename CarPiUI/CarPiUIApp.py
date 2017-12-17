@@ -166,6 +166,7 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
+            GpsRedisKeys.KEY_SPEED,
             GpsRedisKeys.KEY_SPEED_KMH,
             MpdDataRedisKeys.KEY_STATE,
 
@@ -193,6 +194,7 @@ class CarPiUIApp(pqApp):
             NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH,
             NetworkInfoRedisKeys.KEY_WLAN1_SSID,
 
+            GpsRedisKeys.KEY_SPEED,
             GpsRedisKeys.KEY_SPEED_KMH,
             MpdDataRedisKeys.KEY_STATE,
 
@@ -496,7 +498,7 @@ class CarPiUIApp(pqApp):
         :param dict of str, str data:
         """
         speed_str = ''
-        if GpsRedisKeys.KEY_SPEED_KMH in data:
+        if GpsRedisKeys.KEY_SPEED in data and GpsRedisKeys.KEY_SPEED_KMH in data:
             speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
         elif ObdRedisKeys.KEY_VEHICLE_SPEED in data:
             speed_str = data[ObdRedisKeys.KEY_VEHICLE_SPEED]
@@ -536,7 +538,7 @@ class CarPiUIApp(pqApp):
                 float(data.get(GpsRedisKeys.KEY_EPY, '0'))
             )
         else:
-            self._location_label.settext('NO GPS')
+            self._set_accuracy(None, None)
 
     def _set_fuel_consumption(self, val, in_lp100k=False):
         if not val or val is str:
@@ -547,10 +549,10 @@ class CarPiUIApp(pqApp):
             self._location_label.settext('{:<6.2f} l/h'.format(val))
 
     def _set_accuracy(self, epx, epy):
-        if isnan(epx) or isnan(epy):
-            self._location_label.settext('{0:>4}m / {0:>4}m'.format('----'))
+        if not epx or isnan(epx) or not epy or isnan(epy):
+            self._location_label.settext('{0:^15}'.format('NO GPS'))
         else:
-            self._location_label.settext('{:>4.0f}m / {:>4.0f}m'.format(epx, epy))
+            self._location_label.settext('{:>4.0f}m / {:>4.0f}m'.format(epx, epy).center(15))
 
     def _set_speed(self, speed):
         """
