@@ -46,8 +46,8 @@ function copyFileArray {
 
     for (( i=0; i<${fileCount}; i++ ));
     do
-        setStatus "$3\n$(basename ${i})" $(awk "BEGIN {printf \"%.0f\n\", $i / $fileCount * 100}")
-        copyFile "$2" "${i}"
+        setStatus "$3\n$(basename ${files[i]})" $(awk "BEGIN {printf \"%.0f\n\", $i / $fileCount * 100}")
+        copyFile "$2" "${files[i]}"
     done
 }
 
