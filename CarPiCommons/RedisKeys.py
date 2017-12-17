@@ -49,6 +49,8 @@ class GpsRedisKeys:
     KEY_LOCATION_ADMIN1 = 'GPS.Location.Admin1'  # type: str
     KEY_LOCATION_ADMIN2 = 'GPS.Location.Admin2'  # type: str
 
+    KEY_TRIP_A_RECORDING = 'Trip.A.ID'
+
     KEY_ALIVE = 'DaemonAlive.GPS'  # type: str
 
     KEYS = [
@@ -79,10 +81,13 @@ class PersistentGpsRedisKeys:
     KEY_TRIP_A = 'GPS.Trip.A'
     KEY_TRIP_B = 'GPS.Trip.B'
 
+    KEY_TRIP_A_RECORDING = 'Trip.A.ID'
+
     KEYS = [
         KEY_ODO,
         KEY_TRIP_A,
-        KEY_TRIP_B
+        KEY_TRIP_B,
+        KEY_TRIP_A_RECORDING
     ]
 
 

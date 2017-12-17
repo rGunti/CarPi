@@ -30,7 +30,7 @@ from threading import Thread
 from CarPiLogging import log
 from CarPiStyles import PATH_FONT_VCR, PATH_FONT_DEFAULT
 from RedisKeys import NetworkInfoRedisKeys, PersistentGpsRedisKeys
-from RedisUtils import RedisBackgroundFetcher, set_piped
+from RedisUtils import RedisBackgroundFetcher, set_piped, save_synced_value, get_piped
 from pqGUI import Window, Text, Button, TEXT_FONT, DEFAULT_STYLE, DECO_NONE, BG_COLOR
 
 
@@ -141,6 +141,9 @@ class GpsTripSettingsWindow(CarPiBaseSettingsWindow):
                                          'GPS & Trip Settings')
 
     def _init_controls(self):
+        rec_trip = get_piped(self._persist_redis,
+                             [PersistentGpsRedisKeys.KEY_TRIP_A_RECORDING])
+
         self._init_options(self, [
             ('Reset Trip A', self._reset_trip_a_callback),
             None,
@@ -148,8 +151,8 @@ class GpsTripSettingsWindow(CarPiBaseSettingsWindow):
             None,
             ('ODO Correction', self._correct_odo_callback),
             None,
-            None,
-            None,
+            ('Start New Trip', self._new_trip_callback),
+            ('Stop Recording', self._stop_recording_callback) if PersistentGpsRedisKeys in rec_trip else None,
             ('< Back', self._back_callback),
             None
         ])
@@ -189,6 +192,13 @@ class GpsTripSettingsWindow(CarPiBaseSettingsWindow):
 
     def _correct_odo_callback(self, e):
         OdoCorrectionWindow(self, self._persist_redis).show()
+
+    def _new_trip_callback(self, e):
+        save_synced_value(self._temp_redis, self._persist_redis, PersistentGpsRedisKeys.KEY_TRIP_A_RECORDING, '999999')
+        self._reset_trip_a_callback(e)
+
+    def _stop_recording_callback(self, e):
+        save_synced_value(self._temp_redis, self._persist_redis, PersistentGpsRedisKeys.KEY_TRIP_A_RECORDING, None)
 
 
 class NetworkSettingsWindow(CarPiBaseSettingsWindow):

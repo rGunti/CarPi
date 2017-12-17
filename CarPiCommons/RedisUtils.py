@@ -233,6 +233,39 @@ def get_command_params(r, command, params, delete_after_request=True):
         return r.get(get_command_param_key(command, params))
 
 
+def load_synced_value(r, pr, key):
+    """
+    :param Redis r: Redis instance
+    :param Redis pr: Persistent Redis instance
+    :param str key:
+    :return str:
+    """
+    o = get_piped(pr, [key])
+    if key in o and o[key]:
+        set_piped(r, {key: o[key]})
+        return o[key]
+    else:
+        r.delete(key)
+        return None
+
+
+def save_synced_value(r, pr, key, value):
+    """
+    :param Redis r: Redis instance
+    :param Redis pr: Persistent Redis instance
+    :param str key:
+    :param str|None value:
+    :return str:
+    """
+    if value:
+        s = {key: value}
+        set_piped(r, s)
+        set_piped(pr, s)
+    else:
+        r.delete(key)
+        pr.delete(key)
+
+
 def check_command_requests(r, commands):
     """
     Checks a list of commands for a pending request

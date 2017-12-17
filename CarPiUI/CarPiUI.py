@@ -28,11 +28,16 @@ from CarPiConfig import init_config_env
 from CarPiUIApp import CarPiUIApp
 from PygameUtils import init_io, init_pygame, \
     UI_CONFIG_SECTION, UI_CONFIG_KEY_RES_WIDTH, UI_CONFIG_KEY_RES_HEIGHT, UI_CONFIG_KEY_FULLSCREEN
-from RedisUtils import get_redis, get_persistent_redis
+from RedisKeys import PersistentGpsRedisKeys
+from RedisUtils import get_redis, get_persistent_redis, load_synced_value
 from os import path
 from sys import exit
 
 APP_NAME = path.basename(__file__)
+
+SYNC_SETTINGS = [
+    PersistentGpsRedisKeys.KEY_TRIP_A_RECORDING
+]
 
 EXIT_CODE = EXIT_CODES['OK']
 
@@ -45,6 +50,10 @@ if __name__ == "__main__":
         log("Initializing Data Source ...")
         R = get_redis(CONFIG)
         RP = get_persistent_redis(CONFIG)
+
+        log("Synchronizing values ...")
+        for key in SYNC_SETTINGS:
+            load_synced_value(R, RP, key)
 
         log("Configuring UI ...")
         init_io(CONFIG)
