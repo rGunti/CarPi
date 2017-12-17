@@ -97,7 +97,7 @@ class MainSettingsWindow(CarPiBaseSettingsWindow):
             None,
             ('GPS & Trip', self._gps_settings_button_command),
             ('Network', self._network_settings_button_command),
-            ('Music', self._music_settings_button_command),
+            ('Display', self._display_settings_button_command),
             ('Power', self._power_settings_button_command),
             None,
             None,
@@ -114,8 +114,8 @@ class MainSettingsWindow(CarPiBaseSettingsWindow):
     def _network_settings_button_command(self, e):
         NetworkSettingsWindow(self, self._redis).show()
 
-    def _music_settings_button_command(self, e):
-        pass
+    def _display_settings_button_command(self, e):
+        DisplaySettingsWindow(self).show()
 
     def _power_settings_button_command(self, e):
         PowerSettingsWindow(self).show()
@@ -247,6 +247,34 @@ class NetworkSettingsWindow(CarPiBaseSettingsWindow):
     def destroy(self):
         self._fetcher.stop()
         super(NetworkSettingsWindow, self).destroy()
+
+
+class DisplaySettingsWindow(CarPiBaseSettingsWindow):
+    def __init__(self, parent):
+        CarPiBaseSettingsWindow.__init__(self, parent, 'Display Settings')
+
+    def _init_controls(self):
+        self._init_options(self, [
+            None,
+            None,
+            ('Dark', self._dark_callback),
+            ('Bright', self._bright_callback),
+            None,
+            None,
+            None,
+            None,
+            ('< Back', self._back_callback),
+            None
+        ])
+
+    def _dark_callback(self, e):
+        system('echo 30 > /dev/lcdlevel')
+
+    def _bright_callback(self, e):
+        system('echo 100 > /dev/lcdlevel')
+
+    def update(self):
+        pass
 
 
 class PowerSettingsWindow(CarPiBaseSettingsWindow):
