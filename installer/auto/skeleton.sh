@@ -57,31 +57,6 @@ INSTALL_SOURCE="$SCRIPT_LOCATION/../../"
 INSTALL_DESTINATION="/usr/bin/carpi/"
 CONFIG_DESTINATION="/etc/carpi/"
 
-DIR_COMMONS="$INSTALL_SOURCE/CarPiCommons"
-DIR_DAEMONS="$INSTALL_SOURCE/CarPiDaemons"
-
-RES_FILES=(
-    "$DIR_COMMONS/CarPiConfig.py"
-    "$DIR_COMMONS/CarPiLogging.py"
-    "$DIR_COMMONS/CarPiThreading.py"
-    "$DIR_COMMONS/CarPiUtils.py"
-    "$DIR_COMMONS/RedisKeys.py"
-    "$DIR_COMMONS/RedisUtils.py"
-)
-DAEMON_FILES=(
-    "$DIR_DAEMONS/GpsDaemon.py"
-    "$DIR_DAEMONS/Obd2Daemon.py"
-    "$DIR_DAEMONS/Obd2DataParser.py"
-    "$DIR_DAEMONS/MpdDataAndControlDaemon.py"
-    "$DIR_DAEMONS/NetworkInfoDaemon.py"
-)
-CONFIG_FILES=(
-    "$DIR_DAEMONS/gps-daemon.conf"
-    "$DIR_DAEMONS/obd-daemon.conf"
-    "$DIR_DAEMONS/mpd-daemon.conf"
-    "$DIR_DAEMONS/net-daemon.conf"
-)
-
 # ## Step 1: Install Dependencies
 setStatus "Step 1: Installing dependencies..." 0
 # TODO: Install dependencies here
