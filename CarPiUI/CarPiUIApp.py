@@ -510,14 +510,6 @@ class CarPiUIApp(pqApp):
             speed = -1
         self._set_speed(speed)
 
-        # Disabled because reverse geocoding seems to be incompatible with RPI
-        # if GpsRedisKeys.KEY_LOCATION_CITY in data and data[GpsRedisKeys.KEY_LOCATION_CITY]:
-        #     self._location_label.settext(
-        #         '%s: %s' % (data.get(GpsRedisKeys.KEY_LOCATION_COUNTRY, '--'),
-        #                     data.get(GpsRedisKeys.KEY_LOCATION_CITY, '--'))
-        #     )
-        # else:
-        #     self._location_label.settext('---')
         if ObdRedisKeys.KEY_ALIVE in data \
                 and (ObdRedisKeys.KEY_ENGINE_RPM in data and data[ObdRedisKeys.KEY_ENGINE_RPM]) \
                 and (ObdRedisKeys.KEY_INTAKE_MAP in data and data[ObdRedisKeys.KEY_INTAKE_MAP]) \
@@ -529,20 +521,34 @@ class CarPiUIApp(pqApp):
                     float(data[ObdRedisKeys.KEY_INTAKE_MAP]),
                     speed
                 )
-                if not speed or speed < 10:
-                    self._location_label.settext('{:<10.2f} l/h'.format(fuel_cons[0]))
+                if not speed or speed < 20:
+                    self._set_fuel_consumption(fuel_cons[0])
                 else:
-                    self._location_label.settext('{:<10.2f} l/100km'.format(fuel_cons[1]))
+                    self._set_fuel_consumption(fuel_cons[1], True)
             except TypeError:
-                self._location_label.settext('{:<10} l/h'.format('--.--'))
+                self._set_fuel_consumption(None)
         elif GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
                 and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
-            self._location_label.settext('X:{:>4.0f}m  Y:{:>4.0f}m'.format(
+            self._set_accuracy(
                 float(data.get(GpsRedisKeys.KEY_EPX, '0')),
                 float(data.get(GpsRedisKeys.KEY_EPY, '0'))
-            ))
+            )
         else:
             self._location_label.settext('NO GPS')
+
+    def _set_fuel_consumption(self, val, in_lp100k=False):
+        if not val:
+            self._location_label.settext('{:<6} l/h'.format('--.--'))
+        elif in_lp100k:
+            self._location_label.settext('{:<6.2f} l/100km'.format(val))
+        else:
+            self._location_label.settext('{:<6.2f} l/h'.format(val))
+
+    def _set_accuracy(self, epx, epy):
+        if isnan(epx) or isnan(epy):
+            self._location_label.settext('{0:>4}m / {0:>4}m'.format('----'))
+        else:
+            self._location_label.settext('{:>4.0f}m / {:>4.0f}m'.format(epx, epy))
 
     def _set_speed(self, speed):
         """
