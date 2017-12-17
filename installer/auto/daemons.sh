@@ -33,8 +33,6 @@ function setStatus {
 
 # Copy a file from $2 to $1
 function copyFile {
-    DESTINATION=$1
-    SOURCE=$2
     cp -f "$2" "$1"
 }
 

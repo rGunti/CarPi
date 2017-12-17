@@ -33,9 +33,12 @@ function setStatus {
 
 # Copy a file from $2 to $1
 function copyFile {
-    DESTINATION=$1
-    SOURCE=$2
     cp -f "$2" "$1"
+}
+
+# Copy a folder $2 to $1
+function copyDir {
+    cp -rf "$2" "$1"
 }
 
 # Copy array of files $1 to $2 with a given Status text $3
