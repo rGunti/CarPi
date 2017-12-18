@@ -542,11 +542,11 @@ class CarPiUIApp(pqApp):
 
     def _set_fuel_consumption(self, val, in_lp100k=False):
         if not val or val is str:
-            self._location_label.settext('{:<6} l/h'.format('--.--'))
+            self._location_label.settext('{:>6} l/h'.format('--.--'))
         elif in_lp100k:
-            self._location_label.settext('{:<6.2f} l/100km'.format(val))
+            self._location_label.settext('{:>6.2f} l/100km'.format(val))
         else:
-            self._location_label.settext('{:<6.2f} l/h'.format(val))
+            self._location_label.settext('{:>6.2f} l/h'.format(val))
 
     def _set_accuracy(self, epx, epy):
         if not epx or isnan(epx) or not epy or isnan(epy):
