@@ -115,7 +115,7 @@ WantedBy=multi-user.target
 
 EOF
     systemctl daemon-reload
-    systemctl enable carpi-gps-daemon
+    systemctl disable carpi-gps-daemon
 fi
 
 # Step 5.2: OBD
@@ -134,7 +134,7 @@ WantedBy=multi-user.target
 
 EOF
     systemctl daemon-reload
-    systemctl enable carpi-obd-daemon
+    systemctl disable carpi-gps-daemon
 fi
 
 # Step 5.3: MPD
@@ -153,7 +153,7 @@ WantedBy=multi-user.target
 
 EOF
     systemctl daemon-reload
-    systemctl enable carpi-mpd-daemon
+    systemctl disable carpi-gps-daemon
 fi
 
 # Step 5.4: MPD
@@ -172,7 +172,7 @@ WantedBy=multi-user.target
 
 EOF
     systemctl daemon-reload
-    systemctl enable carpi-net-daemon
+    systemctl disable carpi-gps-daemon
 fi
 
 # ## Step 6: Copying Configuration Files

@@ -24,5 +24,7 @@
 cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 python ./CarPiUI.py
+exit_code=$?
 
 echo " ======== Script has ended ======== "
+exit $exit_code
