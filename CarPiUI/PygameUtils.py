@@ -50,7 +50,10 @@ def init_pygame(config):
     :return:
     """
     log('Initializing PyGame ...')
-    pygame.init()
+    init_passed, init_failed = pygame.init()
+    log('PyGame initialized using Ver. {}, {} modules loaded, {} modules failed'.format(pygame.ver,
+                                                                                        init_passed,
+                                                                                        init_failed))
 
     mouse_visible = False
     if config.has_option(UI_CONFIG_SECTION, UI_CONFIG_KEY_SHOW_MOUSE):
