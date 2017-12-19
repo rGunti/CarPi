@@ -52,6 +52,15 @@ IMG_WIFI1 = path.join('res', 'img', 'wifi1.png')
 IMG_WIFI2 = path.join('res', 'img', 'wifi2.png')
 IMG_WIFI3 = path.join('res', 'img', 'wifi3.png')
 
+IMG_GPS_OFF = path.join('res', 'img', 'gpssat-off.png')
+IMG_GPS_ON = path.join('res', 'img', 'gpssat-ok.png')
+IMG_GPS_WARN = path.join('res', 'img', 'gpssat-warn.png')
+IMG_GPS_ERROR = path.join('res', 'img', 'gpssat-error.png')
+
+IMG_OBD_OFF = path.join('res', 'img', 'car-off.png')
+IMG_OBD_ON = path.join('res', 'img', 'car-ok.png')
+IMG_OBD_ERROR = path.join('res', 'img', 'car-error.png')
+
 
 class CarPiUIApp(pqApp):
     PAGE_GPS = 'GPS'
@@ -86,6 +95,10 @@ class CarPiUIApp(pqApp):
         self._music_tab_button = None  # type: Button
         self._settings_tab_button = None  # type: Button
 
+        # Status Icons
+        self._gps_status_icon = None  # type: Image
+        self._obd_status_icon = None  # type: Image
+
         # GPS Data
         self._speed_label = None  # type: Text
         self._speed_unit = None  # type: Text
@@ -103,7 +116,6 @@ class CarPiUIApp(pqApp):
         # Status Bar
         self._ethernet_status_icon = None  # type: Image
         self._wlan0_status_icon = None  # type: Image
-        self._wlan1_status_icon = None  # type: Image
         self._time_label = None  # type: Text
 
         # Music Display
@@ -255,6 +267,13 @@ class CarPiUIApp(pqApp):
         self.load_image(IMG_WIFI1)
         self.load_image(IMG_WIFI2)
         self.load_image(IMG_WIFI3)
+        self.load_image(IMG_GPS_OFF)
+        self.load_image(IMG_GPS_ON)
+        self.load_image(IMG_GPS_WARN)
+        self.load_image(IMG_GPS_ERROR)
+        self.load_image(IMG_OBD_OFF)
+        self.load_image(IMG_OBD_ON)
+        self.load_image(IMG_OBD_ERROR)
 
         self._fetcher = RedisBackgroundFetcher(self._redis, [])
         self._predis_fetcher = RedisBackgroundFetcher(self._pers_redis, [])
@@ -343,12 +362,9 @@ class CarPiUIApp(pqApp):
 
         # Status Bar Icons
         self._ethernet_status_icon = Image(self,
-                                           ((175, 205), (32, 32)),
+                                           ((205, 205), (32, 32)),
                                            self.get_image(IMG_ETHERNET_OFF)).pack()
         self._wlan0_status_icon = Image(self,
-                                        ((205, 205), (32, 32)),
-                                        self.get_image(IMG_WIFI_OFF)).pack()
-        self._wlan1_status_icon = Image(self,
                                         ((235, 205), (32, 32)),
                                         self.get_image(IMG_WIFI_OFF)).pack()
 
@@ -390,6 +406,14 @@ class CarPiUIApp(pqApp):
         self._current_song_time_bar = ProgressBar(self,
                                                   ((5, 190), (310, 5))).pack()
 
+        # Status Icons
+        self._gps_status_icon = Image(self,
+                                      ((255, 90), (32, 32)),
+                                      self.get_image(IMG_GPS_OFF)).pack()
+        self._obd_status_icon = Image(self,
+                                      ((287, 90), (32, 32)),
+                                      self.get_image(IMG_OBD_OFF)).pack()
+
         # Music Controls
         music_control_style = {
             TEXT_FONT: (PATH_FONT_DEFAULT, 25),
@@ -429,6 +453,7 @@ class CarPiUIApp(pqApp):
         new_data = self._fetcher.get_current_data()
         new_pers_data = self._predis_fetcher.get_current_data()
 
+        self._update_status(new_data)
         self._set_speed_metrical(new_data)  # We keep the speed updated at all times so the graph does not lag behind
         self._set_networking_data(new_data)  # Networking is kept alive all the time
         self._set_music_player_info(new_data)
@@ -493,6 +518,35 @@ class CarPiUIApp(pqApp):
         send_command_request(self._redis,
                              MpdCommandRedisKeys.COMMAND_NEXT)
 
+    def _set_gps_status(self, status):
+        self._gps_status_icon.setimage(self.get_image(status))
+
+    def _set_obd_status(self, status):
+        self._obd_status_icon.setimage(self.get_image(status))
+
+    def _update_status(self, data):
+        """
+        :param dict of str, str data:
+        """
+        if GpsRedisKeys.KEY_ALIVE in data:
+            if GpsRedisKeys.KEY_SPEED in data and data[GpsRedisKeys.KEY_SPEED]:
+                self._set_gps_status(IMG_GPS_ON)
+            else:
+                self._set_gps_status(IMG_GPS_ERROR)
+        else:
+            self._set_gps_status(IMG_GPS_OFF)
+
+        if ObdRedisKeys.KEY_ALIVE in data:
+            alive_state = data[ObdRedisKeys.KEY_ALIVE]
+            if alive_state and alive_state == '1':
+                self._set_obd_status(IMG_OBD_ON)
+            elif alive_state and alive_state == '0':
+                self._set_obd_status(IMG_OBD_ERROR)
+            else:
+                self._set_obd_status(IMG_OBD_OFF)
+        else:
+            self._set_obd_status(IMG_OBD_OFF)
+
     def _set_speed_metrical(self, data):
         """
         :param dict of str, str data:
@@ -530,6 +584,7 @@ class CarPiUIApp(pqApp):
                 else:
                     self._set_fuel_consumption(fuel_cons[1], True)
             except TypeError:
+                self._set_obd_status(IMG_OBD_ERROR)
                 self._set_fuel_consumption(None)
         elif GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
                 and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
@@ -587,19 +642,6 @@ class CarPiUIApp(pqApp):
             self._set_wlan_data(self._wlan0_status_icon, strength)
         else:
             self._set_wlan_data(self._wlan0_status_icon, -2)
-
-        if NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH in data \
-                and NetworkInfoRedisKeys.KEY_WLAN1_SSID in data:
-            strength_str = data[NetworkInfoRedisKeys.KEY_WLAN1_STRENGTH]
-            ssid = data[NetworkInfoRedisKeys.KEY_WLAN1_SSID]
-
-            strength = -2
-            if ssid is not None:
-                strength = int(strength_str) if strength_str else 0
-
-            self._set_wlan_data(self._wlan1_status_icon, strength)
-        else:
-            self._set_wlan_data(self._wlan1_status_icon, -2)
 
     def _set_ethernet_data(self, connected):
         """
