@@ -552,9 +552,10 @@ class CarPiUIApp(pqApp):
         :param dict of str, str data:
         """
         speed_str = ''
-        if GpsRedisKeys.KEY_SPEED in data and GpsRedisKeys.KEY_SPEED_KMH in data:
+        if GpsRedisKeys.KEY_SPEED in data and GpsRedisKeys.KEY_SPEED_KMH in data \
+                and data[GpsRedisKeys.KEY_SPEED_KMH]:
             speed_str = data[GpsRedisKeys.KEY_SPEED_KMH]
-        elif ObdRedisKeys.KEY_VEHICLE_SPEED in data:
+        elif ObdRedisKeys.KEY_VEHICLE_SPEED in data and data[ObdRedisKeys.KEY_VEHICLE_SPEED]:
             speed_str = data[ObdRedisKeys.KEY_VEHICLE_SPEED]
         else:
             speed_str = '-1'
