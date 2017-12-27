@@ -567,6 +567,7 @@ class CarPiUIApp(pqApp):
         self._set_speed(speed)
 
         if ObdRedisKeys.KEY_ALIVE in data \
+                and data[ObdRedisKeys.KEY_ALIVE] == '1' \
                 and (ObdRedisKeys.KEY_ENGINE_RPM in data and data[ObdRedisKeys.KEY_ENGINE_RPM]) \
                 and (ObdRedisKeys.KEY_INTAKE_MAP in data and data[ObdRedisKeys.KEY_INTAKE_MAP]) \
                 and (ObdRedisKeys.KEY_INTAKE_TEMP in data and data[ObdRedisKeys.KEY_INTAKE_TEMP]):
@@ -583,9 +584,13 @@ class CarPiUIApp(pqApp):
                     self._set_fuel_consumption(fuel_cons[0])
                 else:
                     self._set_fuel_consumption(fuel_cons[1], True)
+
+                if fuel_cons[0]:
+                    self._speed_graph.add_data_point(fuel_cons[0])
             except TypeError:
                 self._set_obd_status(IMG_OBD_ERROR)
                 self._set_fuel_consumption(None)
+                self._speed_graph.add_data_point(0)
         elif GpsRedisKeys.KEY_EPX in data and GpsRedisKeys.KEY_EPY in data\
                 and data[GpsRedisKeys.KEY_EPX] and data[GpsRedisKeys.KEY_EPY]:
             self._set_accuracy(
@@ -615,10 +620,10 @@ class CarPiUIApp(pqApp):
         """
         if isnan(speed) or speed < 0:
             self._speed_label.settext('---')
-            self._speed_graph.add_data_point(0)
+            #self._speed_graph.add_data_point(0)
         else:
             self._speed_label.settext('{:>3.0f}'.format(speed))
-            self._speed_graph.add_data_point(speed)
+            #self._speed_graph.add_data_point(speed)
 
     def _set_networking_data(self, data):
         """
