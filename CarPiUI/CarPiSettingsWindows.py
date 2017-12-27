@@ -278,7 +278,7 @@ class DisplaySettingsWindow(CarPiBaseSettingsWindow):
         ])
 
     def _dark_callback(self, e):
-        system('echo 30 > /dev/lcdlevel')
+        system('echo 15 > /dev/lcdlevel')
 
     def _bright_callback(self, e):
         system('echo 100 > /dev/lcdlevel')
