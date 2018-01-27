@@ -247,7 +247,7 @@ PARSER_MAP = {
 
 OBD_REDIS_MAP = {
     'ATRV': ObdRedisKeys.KEY_BATTERY_VOLTAGE,
-    '0103': (ObdRedisKeys.KEY_STATUS_FUELSYS_1, ObdRedisKeys.KEY_STATUS_FUELSYS_2),
+    '0103': (ObdRedisKeys.KEY_FUELSYS_1_STATUS, ObdRedisKeys.KEY_FUELSYS_2_STATUS),
     '0104': ObdRedisKeys.KEY_ENGINE_LOAD,
     '0105': ObdRedisKeys.KEY_COOLANT_TEMP,
     '010B': ObdRedisKeys.KEY_INTAKE_MAP,
