@@ -121,6 +121,31 @@ def parse_atrv(v):
         return float('nan')
 
 
+def parse_0103(v):
+    """
+    Parses the fuel system status and returns an array with two elements (one for
+    each fuel system).
+    The returned values are converted to decimal integers and returned as is.
+    The fuel system values are described here:
+    https://en.wikipedia.org/wiki/OBD-II_PIDs#Mode_1_PID_03
+    :param str v: e.g. "41030100"
+    :return int, int:
+    """
+    tv = trim_obd_value(v)  # trimmed value
+    status_1, status_2 = None, None
+    try:
+        status_1 = int(v[:2], 16)
+    except ValueError:
+        status_1 = None
+
+    try:
+        status_2 = int(v[2:4], 16)
+    except ValueError:
+        status_2 = None
+
+    return status_1, status_2
+
+
 def parse_0104(v):
     """
     Parses the calculated engine load and returns it as an integer from 0 - 100
@@ -203,6 +228,7 @@ def parse_0134_013B(v):
 
 PARSER_MAP = {
     'ATRV': parse_atrv,
+    '0103': parse_0103,
     '0104': parse_0104,
     '0105': parse_010F,
     '010B': parse_010B,
@@ -221,6 +247,7 @@ PARSER_MAP = {
 
 OBD_REDIS_MAP = {
     'ATRV': ObdRedisKeys.KEY_BATTERY_VOLTAGE,
+    '0103': (ObdRedisKeys.KEY_STATUS_FUELSYS_1, ObdRedisKeys.KEY_STATUS_FUELSYS_2),
     '0104': ObdRedisKeys.KEY_ENGINE_LOAD,
     '0105': ObdRedisKeys.KEY_COOLANT_TEMP,
     '010B': ObdRedisKeys.KEY_INTAKE_MAP,
