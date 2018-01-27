@@ -143,6 +143,8 @@ Description=CarPi OBD2 Daemon
 [Service]
 Type=simple
 ExecStart=$INSTALL_DESTINATION/Obd2Daemon.py
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

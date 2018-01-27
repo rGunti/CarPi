@@ -142,6 +142,8 @@ Description=CarPi Network Info Daemon
 [Service]
 Type=simple
 ExecStart=$INSTALL_DESTINATION/NetworkInfoDaemon.py
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

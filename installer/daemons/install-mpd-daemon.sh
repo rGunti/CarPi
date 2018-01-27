@@ -143,6 +143,8 @@ Description=CarPi MPD Data & Control Daemon
 [Service]
 Type=simple
 ExecStart=$INSTALL_DESTINATION/MpdDataAndControlDaemon.py
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
