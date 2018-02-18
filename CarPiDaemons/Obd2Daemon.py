@@ -132,6 +132,7 @@ if __name__ == "__main__":
                 log("Configuration completed, starting recording loop ...")
                 while True:
                     data = transform_obj(parse_obj(get_arr(T, CONFIG_POLL_SEQ)))
+                    data[ObdRedisKeys.KEY_ALIVE] = 1
                     set_piped(R, data)
             except timeout:
                 log("Connection to OBD Adapter timed out after {} sec, retrying after {} sec".format(
