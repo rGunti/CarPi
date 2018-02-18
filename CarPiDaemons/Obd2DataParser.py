@@ -121,6 +121,28 @@ def parse_atrv(v):
         return float('nan')
 
 
+def parse_0101(v):
+    """
+    Parses the DTC status and returns two elements.
+    https://en.wikipedia.org/wiki/OBD-II_PIDs#Mode_1_PID_01
+    :param v:
+    :return bool, int:
+    """
+    tv = trim_obd_value(v)
+    mil_status = None  # type: bool
+    num_dtc = None  # type: int
+
+    try:
+        byte_a = int(v[:2], 16)
+        mil_status = byte_a / 0xF >= 1
+        num_dtc = mil_status % 0xF
+    except ValueError:
+        mil_status = None
+        num_dtc = None
+
+    return mil_status, num_dtc
+
+
 def parse_0103(v):
     """
     Parses the fuel system status and returns an array with two elements (one for
@@ -228,6 +250,7 @@ def parse_0134_013B(v):
 
 PARSER_MAP = {
     'ATRV': parse_atrv,
+    '0101': parse_0101,
     '0103': parse_0103,
     '0104': parse_0104,
     '0105': parse_010F,
@@ -247,6 +270,7 @@ PARSER_MAP = {
 
 OBD_REDIS_MAP = {
     'ATRV': ObdRedisKeys.KEY_BATTERY_VOLTAGE,
+    '0101': (ObdRedisKeys.KEY_MIL_STATUS, ObdRedisKeys.KEY_DTC_COUNT),
     '0103': (ObdRedisKeys.KEY_FUELSYS_1_STATUS, ObdRedisKeys.KEY_FUELSYS_2_STATUS),
     '0104': ObdRedisKeys.KEY_ENGINE_LOAD,
     '0105': ObdRedisKeys.KEY_COOLANT_TEMP,

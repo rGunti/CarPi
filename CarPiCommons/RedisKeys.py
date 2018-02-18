@@ -182,6 +182,8 @@ class ObdRedisKeys:
     KEY_O2_SENSOR_CURRENT = 'OBD.O2Sensor.Current'
     KEY_FUELSYS_1_STATUS = 'OBD.FuelSystem1.Status'
     KEY_FUELSYS_2_STATUS = 'OBD.FuelSystem2.Status'
+    KEY_MIL_STATUS = 'OBD.MIL'
+    KEY_DTC_COUNT = 'OBD.DTCCount'
 
     KEYS = [
         KEY_ALIVE,
