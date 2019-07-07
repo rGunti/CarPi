@@ -21,16 +21,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FILE_NAME=$1
-SPEED=$2
+SCRIPT_LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "Shutting down GPSD before starting fakegps ..."
-sudo service gpsd stop
+echo "[*] Preparing for update ..."
+cd "$SCRIPT_LOCATION"
+git reset --hard HEAD
+git clean -xffd
 
-echo "Starting gpsfake with $FILE_NAME (press Ctrl-C to stop) ..."
-gpsfake -c $SPEED $FILE_NAME
+echo "[*] Updating installation ..."
+git pull
 
-echo "Restarting GPSD ..."
-sudo service gpsd start
+echo "[*] Making Scripts executable ..."
+chmod +x $SCRIPT_LOCATION/*.sh
+chmod +x $SCRIPT_LOCATION/CarPiDaemons/*.sh
+chmod +x $SCRIPT_LOCATION/CarPiUI/*.sh
+chmod +x $SCRIPT_LOCATION/installer/daemons/*.sh
+chmod +x $SCRIPT_LOCATION/installer/ui/*.sh
+
+echo "[O] Update has been completed. Rerun any installer scripts to update"
+echo "    your components"
 
 echo " ======== Script has ended ======== "

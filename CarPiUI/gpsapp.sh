@@ -21,16 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FILE_NAME=$1
-SPEED=$2
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "Shutting down GPSD before starting fakegps ..."
-sudo service gpsd stop
+export SDL_FBDEV=/dev/fb1
+export SDL_MOUSEDEV=/dev/input/event2
+export SDL_MOUSEDRV=TSLIB
 
-echo "Starting gpsfake with $FILE_NAME (press Ctrl-C to stop) ..."
-gpsfake -c $SPEED $FILE_NAME
+python ./GpsApp.py
 
-echo "Restarting GPSD ..."
-sudo service gpsd start
 
 echo " ======== Script has ended ======== "

@@ -21,16 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FILE_NAME=$1
-SPEED=$2
-
-echo "Shutting down GPSD before starting fakegps ..."
-sudo service gpsd stop
-
-echo "Starting gpsfake with $FILE_NAME (press Ctrl-C to stop) ..."
-gpsfake -c $SPEED $FILE_NAME
-
-echo "Restarting GPSD ..."
-sudo service gpsd start
+cd "${0%/*}"
+sudo python ./NetworkInfoDaemon.py
 
 echo " ======== Script has ended ======== "
