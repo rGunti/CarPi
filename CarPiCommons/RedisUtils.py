@@ -120,6 +120,9 @@ def set_piped(r, data_dict):
     for key, value in data_dict.iteritems():
         if value is None:
             pipe.delete(key)
+        elif type(key) is tuple:
+            pipe.set(key[0], value[0], ex=RCONFIG_VALUE_EXPIRE)
+            pipe.set(key[1], value[1], ex=RCONFIG_VALUE_EXPIRE)
         else:
             pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
 
