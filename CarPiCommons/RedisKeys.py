@@ -184,6 +184,8 @@ class ObdRedisKeys:
     KEY_FUELSYS_2_STATUS = 'OBD.FuelSystem2.Status'
     KEY_MIL_STATUS = 'OBD.MIL'
     KEY_DTC_COUNT = 'OBD.DTCCount'
+    KEY_CURRENT_DTCS = 'OBD.DTCs.Current'
+    KEY_PENDING_DTCS = 'OBD.DTCs.Pending'
 
     KEYS = [
         KEY_ALIVE,

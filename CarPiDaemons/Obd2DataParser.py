@@ -326,7 +326,8 @@ PARSER_MAP = {
     '0139': parse_0134_013B,
     '013A': parse_0134_013B,
     '013B': parse_0134_013B,
-    '03': parse_03
+    '03': parse_03,
+    '07': parse_03
 }
 
 OBD_REDIS_MAP = {
@@ -346,7 +347,9 @@ OBD_REDIS_MAP = {
     '0138': (ObdRedisKeys.KEY_O2_SENSOR_FAEQV, ObdRedisKeys.KEY_O2_SENSOR_CURRENT),
     '0139': (ObdRedisKeys.KEY_O2_SENSOR_FAEQV, ObdRedisKeys.KEY_O2_SENSOR_CURRENT),
     '013A': (ObdRedisKeys.KEY_O2_SENSOR_FAEQV, ObdRedisKeys.KEY_O2_SENSOR_CURRENT),
-    '013B': (ObdRedisKeys.KEY_O2_SENSOR_FAEQV, ObdRedisKeys.KEY_O2_SENSOR_CURRENT)
+    '013B': (ObdRedisKeys.KEY_O2_SENSOR_FAEQV, ObdRedisKeys.KEY_O2_SENSOR_CURRENT),
+    '03': ObdRedisKeys.KEY_CURRENT_DTCS,
+    '07': ObdRedisKeys.KEY_PENDING_DTCS
 }
 
 if __name__ == "__main__":

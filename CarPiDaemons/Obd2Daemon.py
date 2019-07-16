@@ -86,6 +86,8 @@ def get_arr(t, cmds):
     o = {}
     for cmd in cmds:
         o[cmd] = send(t, cmd)
+        if CONFIG_VERBOSE:
+            log('VERBOSE: {} ; {}'.format(cmd, o[cmd]))
     return o
 
 
@@ -102,6 +104,7 @@ if __name__ == "__main__":
 
     CONFIG_INIT_SEQ = CONFIG.get('DataPoller', 'init_sequence').split(',')
     CONFIG_POLL_SEQ = CONFIG.get('DataPoller', 'poll_sequence').split(',')
+    CONFIG_VERBOSE = CONFIG.get('DataPoller', 'verbose_log') == '1'
 
     log("Initialize Redis Connection ...")
     R = get_redis(CONFIG)
