@@ -279,31 +279,35 @@ def parse_03(v):
     """
     dtcs = []
 
-    if v:
-        print('input: {}'.format(v))
-        for i in range(0, len(v), 4):
-            byte_a = int(v[i:i+2], 16)
-            byte_b = int(v[i+2:i+4], 16)
+    trim_v = trim_obd_value(v)
+    if trim_v:
+        # print('input: {}'.format(trim_v))
+        for i in range(0, len(trim_v), 4):
+            try:
+                byte_a = int(trim_v[i:i + 2], 16)
+                byte_b = int(trim_v[i + 2:i + 4], 16)
 
-            print(' - bytes: {},{}'.format(byte_a, byte_b))
+                # print(' - bytes: {},{}'.format(byte_a, byte_b))
 
-            err_src = byte_a / 64
-            err_src_code = DTC_SOURCES[err_src]
+                err_src = byte_a / 64
+                err_src_code = DTC_SOURCES[err_src]
 
-            print('   Err Src: {} ({})'.format(err_src, err_src_code))
+                # print('   Err Src: {} ({})'.format(err_src, err_src_code))
 
-            dtc_c2 = byte_a % 64 / 16
-            dtc_c3 = byte_a % 16
-            dtc_c4 = byte_b / 16
-            dtc_c5 = byte_b % 16
+                dtc_c2 = byte_a % 64 / 16
+                dtc_c3 = byte_a % 16
+                dtc_c4 = byte_b / 16
+                dtc_c5 = byte_b % 16
 
-            print('   {}, {}, {}, {}'.format(dtc_c2, dtc_c3, dtc_c4, dtc_c5))
+                # print('   {}, {}, {}, {}'.format(dtc_c2, dtc_c3, dtc_c4, dtc_c5))
 
-            dtc = '{}{}{}{}{}'.format(err_src_code, dtc_c2, dtc_c3, dtc_c4, dtc_c5)
-            print('=> {}'.format(dtc))
+                dtc = '{}{}{}{}{}'.format(err_src_code, dtc_c2, dtc_c3, dtc_c4, dtc_c5)
+                # print('=> {}'.format(dtc))
 
-            if dtc != NO_DTC:
-                dtcs.append(dtc)
+                if dtc != NO_DTC:
+                    dtcs.append(dtc)
+            except ValueError:
+                pass
 
     return dtcs
 

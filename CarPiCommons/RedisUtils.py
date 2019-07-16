@@ -123,17 +123,17 @@ def set_piped(r, data_dict):
                 if value[i] is None:
                     pipe.delete(key[i])
                 else:
-                    pipe.set(key[i], value[i], ex=RCONFIG_VALUE_EXPIRE)
+                    pipe.set(key[i], str(value[i]), ex=RCONFIG_VALUE_EXPIRE)
 
                 result_dict[key[i]] = None
                 keys.append(key[i])
         else:
             if value is None:
                 pipe.delete(key)
-            elif type(key) is tuple or type(key) is list:
+            elif type(value) is tuple or type(value) is list:
                 pipe.set(key, '|'.join(value), ex=RCONFIG_VALUE_EXPIRE)
             else:
-                pipe.set(key, value, ex=RCONFIG_VALUE_EXPIRE)
+                pipe.set(key, str(value), ex=RCONFIG_VALUE_EXPIRE)
 
             result_dict[key] = None
             keys.append(key)
