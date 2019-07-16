@@ -248,6 +248,66 @@ def parse_0134_013B(v):
         return float('nan'), float('nan')
 
 
+DTC_SOURCES = {
+    0: 'P',
+    1: 'C',
+    2: 'B',
+    3: 'U'
+}
+NO_DTC = 'P0000'
+
+
+def parse_03(v):
+    """
+    Parses stored DTC codes and returns them as a list.
+
+    01,01,0001|0001,0001 => U1111
+
+    A7,6: Error Source
+        0 P Powertrain
+        1 C Chassis
+        2 B Body
+        3 U Network
+
+    A5,4: 2nd DTC Char => as number (0-3)
+    A3,0: 3rd DTC Char => as number (0-F)
+    B7,4: 4th DTC Char => as number (0-F)
+    B3,0: 5th DTC Char => as number (0-F)
+
+    :param str v:
+    :return list:
+    """
+    dtcs = []
+
+    if v:
+        print('input: {}'.format(v))
+        for i in range(0, len(v), 4):
+            byte_a = int(v[i:i+2], 16)
+            byte_b = int(v[i+2:i+4], 16)
+
+            print(' - bytes: {},{}'.format(byte_a, byte_b))
+
+            err_src = byte_a / 64
+            err_src_code = DTC_SOURCES[err_src]
+
+            print('   Err Src: {} ({})'.format(err_src, err_src_code))
+
+            dtc_c2 = byte_a % 64 / 16
+            dtc_c3 = byte_a % 16
+            dtc_c4 = byte_b / 16
+            dtc_c5 = byte_b % 16
+
+            print('   {}, {}, {}, {}'.format(dtc_c2, dtc_c3, dtc_c4, dtc_c5))
+
+            dtc = '{}{}{}{}{}'.format(err_src_code, dtc_c2, dtc_c3, dtc_c4, dtc_c5)
+            print('=> {}'.format(dtc))
+
+            if dtc != NO_DTC:
+                dtcs.append(dtc)
+
+    return dtcs
+
+
 PARSER_MAP = {
     'ATRV': parse_atrv,
     '0101': parse_0101,
@@ -265,7 +325,8 @@ PARSER_MAP = {
     '0138': parse_0134_013B,
     '0139': parse_0134_013B,
     '013A': parse_0134_013B,
-    '013B': parse_0134_013B
+    '013B': parse_0134_013B,
+    '03': parse_03
 }
 
 OBD_REDIS_MAP = {
